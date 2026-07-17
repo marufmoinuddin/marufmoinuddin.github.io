@@ -33,6 +33,9 @@
     // Smooth scroll for anchor links
     initSmoothScroll();
 
+    // Blog category filtering
+    initBlogFilter();
+
   });
 
   // --- Dark/Light Mode Toggle ---
@@ -354,6 +357,38 @@
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     });
+  }
+
+  // --- Blog Category Filtering ---
+  function initBlogFilter() {
+    var chips = document.querySelectorAll('.chip');
+    var posts = document.querySelectorAll('.post-card');
+    var searchInput = document.getElementById('blogSearch');
+
+    if (chips.length === 0 || posts.length === 0) return;
+
+    chips.forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        chips.forEach(function(c) { c.classList.remove('active'); });
+        this.classList.add('active');
+        filterPosts(this.dataset.filter, searchInput ? searchInput.value : '');
+      });
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        var activeChip = document.querySelector('.chip.active');
+        filterPosts(activeChip ? activeChip.dataset.filter : 'all', this.value);
+      });
+    }
+
+    function filterPosts(category, query) {
+      posts.forEach(function(post) {
+        var catMatch = category === 'all' || post.dataset.category === category;
+        var textMatch = !query || post.textContent.toLowerCase().includes(query.toLowerCase());
+        post.style.display = catMatch && textMatch ? '' : 'none';
+      });
+    }
   }
 
 })();

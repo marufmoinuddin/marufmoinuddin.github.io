@@ -34,6 +34,7 @@ exclude:
   - Gemfile.lock
   - node_modules
   - vendor
+  - scripts
 
 # ============================================================
 # Plugins (all GitHub Pages whitelisted)
@@ -111,9 +112,6 @@ social:
     - https://linkedin.com/in/marufmoinuddin
     - https://twitter.com/marufmoinuddin
 
-webmaster_verifications:
-  google:
-  bing:
 
 # ============================================================
 # Analytics

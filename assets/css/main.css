@@ -362,7 +362,7 @@ a.btn-text:hover {
 
 .featured-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--bg-primary) 30%, transparent);
 }
 
 .featured-card-body {
@@ -507,7 +507,7 @@ a.btn-text:hover {
 
 .highlight-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 25px color-mix(in srgb, var(--bg-primary) 30%, transparent);
 }
 
 .highlight-card h3 {
@@ -1047,7 +1047,7 @@ pre:hover .code-copy-btn {
 
 .post-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--bg-primary) 20%, transparent);
 }
 
 .post-card-body {

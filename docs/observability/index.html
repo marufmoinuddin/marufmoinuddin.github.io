@@ -4,28 +4,4 @@ title: "Observability Documentation"
 description: "Monitoring, logging, and observability stack setup and maintenance."
 ---
 
-<div class="doc-category-header">
-  <i class="fa-brands fa-eye doc-category-icon"></i>
-  <div>
-    <h1 class="doc-category-title">Observability</h1>
-    <p class="doc-category-desc">Monitoring, logging, and observability stack setup and maintenance.</p>
-  </div>
-</div>
-
-<div class="doc-list">
-  {% assign category_docs = site.docs | where: "category", "observability" | sort: "order" %}
-  {% if category_docs.size > 0 %}
-    {% for doc in category_docs %}
-    <a href="{{ doc.url | relative_url }}" class="doc-list-card">
-      <div class="doc-list-card-body">
-        <h3>{{ doc.title }}</h3>
-        {% if doc.last_updated %}
-        <p class="doc-list-date">Last updated: {{ doc.last_updated | date: "%B %d, %Y" }}</p>
-        {% endif %}
-      </div>
-    </a>
-    {% endfor %}
-  {% else %}
-    <p class="doc-list-empty">No documentation pages in this category yet.</p>
-  {% endif %}
-</div>
+{% include doc-category-list.html category="observability" icon="fa-solid fa-chart-line" title="Observability" description="Monitoring, logging, and observability stack setup and maintenance." %}

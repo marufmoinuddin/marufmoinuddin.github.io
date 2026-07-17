@@ -6,7 +6,8 @@
   <span class="sep">/</span>
   {% endif %}
   {% if include.category_label and include.category_slug %}
-  <a href="{{ include.collection_url | relative_url }}{{ include.category_slug }}/">{{ include.category_label }}</a>
+  {% assign display_category = include.category_label | replace: "-", " " | capitalize %}
+  <a href="{{ include.collection_url | relative_url }}{{ include.category_slug }}/">{{ display_category }}</a>
   <span class="sep">/</span>
   {% endif %}
   <span>{{ page.title }}</span>

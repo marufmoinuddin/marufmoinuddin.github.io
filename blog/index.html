@@ -57,35 +57,3 @@ description: "Thoughts on infrastructure, DevOps, Kubernetes, and security."
   {% endif %}
 </nav>
 {% endif %}
-
-<script>
-  // Client-side blog filtering
-  document.addEventListener('DOMContentLoaded', function() {
-    const chips = document.querySelectorAll('.chip');
-    const posts = document.querySelectorAll('.post-card');
-    const searchInput = document.getElementById('blogSearch');
-
-    chips.forEach(chip => {
-      chip.addEventListener('click', function() {
-        chips.forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-        filterPosts(this.dataset.filter, searchInput ? searchInput.value : '');
-      });
-    });
-
-    if (searchInput) {
-      searchInput.addEventListener('input', function() {
-        const activeChip = document.querySelector('.chip.active');
-        filterPosts(activeChip ? activeChip.dataset.filter : 'all', this.value);
-      });
-    }
-
-    function filterPosts(category, query) {
-      posts.forEach(post => {
-        const catMatch = category === 'all' || post.dataset.category === category;
-        const textMatch = !query || post.textContent.toLowerCase().includes(query.toLowerCase());
-        post.style.display = catMatch && textMatch ? '' : 'none';
-      });
-    }
-  });
-</script>

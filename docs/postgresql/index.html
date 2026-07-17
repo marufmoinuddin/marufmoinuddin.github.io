@@ -4,28 +4,4 @@ title: "PostgreSQL Documentation"
 description: "PostgreSQL database administration, high availability, replication, and compliance."
 ---
 
-<div class="doc-category-header">
-  <i class="fa-brands fa-database doc-category-icon"></i>
-  <div>
-    <h1 class="doc-category-title">PostgreSQL</h1>
-    <p class="doc-category-desc">PostgreSQL database administration, high availability, replication, and compliance.</p>
-  </div>
-</div>
-
-<div class="doc-list">
-  {% assign category_docs = site.docs | where: "category", "postgresql" | sort: "order" %}
-  {% if category_docs.size > 0 %}
-    {% for doc in category_docs %}
-    <a href="{{ doc.url | relative_url }}" class="doc-list-card">
-      <div class="doc-list-card-body">
-        <h3>{{ doc.title }}</h3>
-        {% if doc.last_updated %}
-        <p class="doc-list-date">Last updated: {{ doc.last_updated | date: "%B %d, %Y" }}</p>
-        {% endif %}
-      </div>
-    </a>
-    {% endfor %}
-  {% else %}
-    <p class="doc-list-empty">No documentation pages in this category yet.</p>
-  {% endif %}
-</div>
+{% include doc-category-list.html category="postgresql" icon="fa-solid fa-database" title="PostgreSQL" description="PostgreSQL database administration, high availability, replication, and compliance." %}
