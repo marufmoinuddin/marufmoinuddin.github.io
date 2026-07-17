@@ -15,12 +15,14 @@
       <a href="{{ include.post.url | relative_url }}">{{ include.post.title }}</a>
     </h3>
     {% if include.post.excerpt %}
-    <p class="post-card-excerpt">{{ include.post.excerpt | strip_html | truncate: 200 }}</p>
+    <p class="post-card-excerpt">{{ include.post.excerpt | strip_html | truncate: 180 }}</p>
     {% endif %}
+    {% if include.post.tags.size > 0 %}
     <div class="post-card-tags">
       {% for tag in include.post.tags limit:4 %}
       <a href="{{ '/tags/' | relative_url }}#{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
       {% endfor %}
     </div>
+    {% endif %}
   </div>
 </article>

@@ -1,59 +1,67 @@
 ---
 layout: page
 title: Blog
-description: "Thoughts on infrastructure, DevOps, Kubernetes, and security."
+description: "Notes on infrastructure, operations, and systems work."
 ---
 
-<!-- Featured Post Banner -->
+{% if site.posts.size > 0 %}
+
 {% assign featured = site.posts | where: "featured", true | first %}
 {% if featured %}
 <article class="featured-banner">
-  <div class="featured-banner-body">
-    <span class="badge badge-featured">Featured</span>
-    <h2><a href="{{ featured.url | relative_url }}">{{ featured.title }}</a></h2>
-    <p>{{ featured.excerpt | strip_html | truncate: 250 }}</p>
-    <div class="featured-banner-meta">
-      <time datetime="{{ featured.date | date_to_xmlschema }}">{{ featured.date | date: "%B %d, %Y" }}</time>
-      {% if featured.read_time %}<span>{{ featured.read_time }} min read</span>{% endif %}
-    </div>
+  <span class="badge badge-featured">Featured</span>
+  <h2><a href="{{ featured.url | relative_url }}">{{ featured.title }}</a></h2>
+  <p>{{ featured.excerpt | strip_html | truncate: 220 }}</p>
+  <div class="featured-banner-meta">
+    <time datetime="{{ featured.date | date_to_xmlschema }}">{{ featured.date | date: "%B %d, %Y" }}</time>
+    {% if featured.read_time %}<span>{{ featured.read_time }} min read</span>{% endif %}
   </div>
 </article>
 {% endif %}
 
-<!-- Filter Chips -->
-<div class="filter-chips">
-  <button class="chip active" data-filter="all">All</button>
-  <button class="chip" data-filter="DevOps">DevOps</button>
-  <button class="chip" data-filter="Kubernetes">Kubernetes</button>
-  <button class="chip" data-filter="PostgreSQL">PostgreSQL</button>
-  <button class="chip" data-filter="Observability">Observability</button>
-  <button class="chip" data-filter="Security">Security</button>
-  <button class="chip" data-filter="Android">Android</button>
-  <button class="chip" data-filter="Networking">Networking</button>
-  <button class="chip" data-filter="Linux">Linux</button>
+<div class="blog-toolbar">
+  <div class="blog-search">
+    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    <input type="text" class="search-input" id="blogSearch" placeholder="Filter posts..." aria-label="Search blog posts">
+  </div>
 </div>
 
-<!-- Search Input -->
-<div class="blog-search">
-  <input type="text" class="search-input" id="blogSearch" placeholder="Search posts..." aria-label="Search blog posts">
-</div>
-
-<!-- Post Grid -->
 <div class="post-grid" id="postGrid">
   {% for post in paginator.posts %}
   {% include post-card.html post=post %}
   {% endfor %}
 </div>
 
-<!-- Pagination -->
 {% if paginator.total_pages > 1 %}
-<nav class="pagination">
+<nav class="pagination" aria-label="Blog pagination">
   {% if paginator.previous_page %}
-  <a href="{{ paginator.previous_page_path | relative_url }}" class="pag-prev">&larr; Newer Posts</a>
+  <a href="{{ paginator.previous_page_path | relative_url }}" class="pag-prev">← Newer</a>
+  {% else %}
+  <span class="pag-prev is-disabled">← Newer</span>
   {% endif %}
   <span class="pag-info">Page {{ paginator.page }} of {{ paginator.total_pages }}</span>
   {% if paginator.next_page %}
-  <a href="{{ paginator.next_page_path | relative_url }}" class="pag-next">Older Posts &rarr;</a>
+  <a href="{{ paginator.next_page_path | relative_url }}" class="pag-next">Older →</a>
+  {% else %}
+  <span class="pag-next is-disabled">Older →</span>
   {% endif %}
 </nav>
+{% endif %}
+
+{% else %}
+
+<div class="empty-card large">
+  <div class="empty-icon" aria-hidden="true">
+    <i class="fa-regular fa-newspaper"></i>
+  </div>
+  <h2>Nothing published yet</h2>
+  <p>
+    The archive is empty on purpose — a clean start. New posts will show up here soon.
+  </p>
+  <div class="empty-actions">
+    <a href="{{ '/about/' | relative_url }}" class="btn btn-primary">About me</a>
+    <a href="{{ '/contact/' | relative_url }}" class="btn btn-ghost">Contact</a>
+  </div>
+</div>
+
 {% endif %}

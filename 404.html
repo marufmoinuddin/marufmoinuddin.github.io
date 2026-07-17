@@ -6,9 +6,12 @@ permalink: /404.html
 
 <div class="error-page">
   <div class="container">
-    <h1 class="error-code">404</h1>
-    <p class="error-message">The page you're looking for doesn't exist.</p>
-    <p class="error-description">It might have been moved, deleted, or the URL might be incorrect.</p>
-    <a href="/" class="btn btn-primary">Go Home</a>
+    <p class="error-code">404</p>
+    <h1 class="error-message">Page not found</h1>
+    <p class="error-description">That URL doesn’t exist — or it moved when the site was simplified.</p>
+    <div class="empty-actions">
+      <a href="{{ '/' | relative_url }}" class="btn btn-primary">Go home</a>
+      <a href="{{ '/blog/' | relative_url }}" class="btn btn-ghost">Blog</a>
+    </div>
   </div>
 </div>

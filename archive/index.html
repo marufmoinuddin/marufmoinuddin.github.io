@@ -1,13 +1,22 @@
 ---
 layout: page
 title: Archive
-description: "All content grouped by year and month."
+description: "All posts by year."
+permalink: /archive/
 ---
 
 <div class="archive-page">
-  {% assign all_content = site.posts | concat: site.research | sort: "date" | reverse %}
-  {% assign grouped = all_content | group_by_exp: "item", "item.date | date: '%Y'" %}
-  
+  {% if site.posts.size == 0 %}
+  <div class="empty-card">
+    <div class="empty-icon" aria-hidden="true">
+      <i class="fa-regular fa-folder-open"></i>
+    </div>
+    <h3>No posts yet</h3>
+    <p>When writing lands on the blog, it will be listed here by year.</p>
+    <a href="{{ '/blog/' | relative_url }}" class="btn btn-ghost">Back to blog</a>
+  </div>
+  {% else %}
+  {% assign grouped = site.posts | group_by_exp: "item", "item.date | date: '%Y'" %}
   {% for year in grouped %}
   <section class="archive-year">
     <h2 class="archive-year-title">{{ year.name }}</h2>
@@ -19,11 +28,9 @@ description: "All content grouped by year and month."
         {% for item in month.items %}
         <li>
           <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
-          <span class="archive-meta">
-            {% if item.collection == "posts" %}Blog{% elsif item.collection == "research" %}Research{% else %}Post{% endif %}
-            &middot;
+          <time class="archive-meta" datetime="{{ item.date | date_to_xmlschema }}">
             {{ item.date | date: "%b %d" }}
-          </span>
+          </time>
         </li>
         {% endfor %}
       </ul>
@@ -31,4 +38,5 @@ description: "All content grouped by year and month."
     {% endfor %}
   </section>
   {% endfor %}
+  {% endif %}
 </div>

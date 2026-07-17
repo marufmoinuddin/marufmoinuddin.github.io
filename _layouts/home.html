@@ -2,152 +2,84 @@
 layout: default
 ---
 
-<!-- Hero Section -->
-<section class="hero-section">
-  <div class="hero-bg"></div>
-  <div class="container hero-content">
-    <div class="hero-text">
-      <h1 class="hero-name">{{ site.author }}</h1>
-      <p class="hero-tagline">Operations Engineer · DevOps · Security Research</p>
-      <p class="hero-subcopy">Field notes on Kubernetes, PostgreSQL, observability, Android security research, and infrastructure troubleshooting.</p>
-      <div class="hero-ctas">
-        <a href="{{ '/blog/' | relative_url }}" class="btn btn-primary">Read the Blog &rarr;</a>
-        <a href="{{ '/docs/' | relative_url }}" class="btn btn-outline">Browse Docs &rarr;</a>
-      </div>
+<!-- Hero -->
+<section class="hero">
+  <div class="container hero-inner">
+    <p class="hero-eyebrow">Hello — I'm</p>
+    <h1 class="hero-name">{{ site.author }}</h1>
+    <p class="hero-role">Operations Engineer · DevOps</p>
+    <p class="hero-lede">
+      I build and run reliable infrastructure. This site is a quiet home for notes on systems,
+      platform work, and lessons from production.
+    </p>
+    <div class="hero-actions">
+      <a href="{{ '/blog/' | relative_url }}" class="btn btn-primary">Read the blog</a>
+      <a href="{{ '/about/' | relative_url }}" class="btn btn-ghost">About me</a>
     </div>
   </div>
 </section>
 
-<!-- Featured Posts -->
-{% assign featured = site.posts | where: "featured", true %}
-{% if featured.size > 0 %}
-<section class="section featured-section">
-  <div class="container">
-    <h2 class="section-title">Featured Posts</h2>
-    <div class="featured-grid">
-      {% for post in featured limit:3 %}
-      <article class="featured-card">
-        <div class="featured-card-body">
-          <div class="featured-card-meta">
-            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %d, %Y" }}</time>
-            {% if post.read_time %}<span>{{ post.read_time }} min read</span>{% endif %}
-          </div>
-          <h3><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
-          {% if post.excerpt %}<p>{{ post.excerpt | strip_html | truncate: 180 }}</p>{% endif %}
-          <div class="featured-card-tags">
-            {% for tag in post.tags limit:3 %}
-            <a href="{{ '/tags/' | relative_url }}#{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
-            {% endfor %}
-          </div>
-        </div>
-      </article>
-      {% endfor %}
+<!-- Latest posts -->
+<section class="section">
+  <div class="container narrow">
+    <div class="section-head">
+      <h2 class="section-title">Writing</h2>
+      {% if site.posts.size > 0 %}
+      <a href="{{ '/blog/' | relative_url }}" class="section-link">View all →</a>
+      {% endif %}
     </div>
-  </div>
-</section>
-{% endif %}
 
-<!-- Documentation Categories -->
-<section class="section docs-categories-section">
-  <div class="container">
-    <h2 class="section-title">Documentation Categories</h2>
-    <div class="category-grid">
-      <a href="{{ '/docs/kubernetes/' | relative_url }}" class="category-tile">
-        <i class="fa-brands fa-kubernetes"></i>
-        <h3>Kubernetes Runbooks</h3>
-        <p>Cluster operations, troubleshooting, and best practices</p>
-      </a>
-      <a href="{{ '/docs/postgresql/' | relative_url }}" class="category-tile">
-        <i class="fa-solid fa-database"></i>
-        <h3>PostgreSQL Operations</h3>
-        <p>HA clusters, replication, performance tuning</p>
-      </a>
-      <a href="{{ '/docs/observability/' | relative_url }}" class="category-tile">
-        <i class="fa-solid fa-chart-line"></i>
-        <h3>Monitoring &amp; ELK</h3>
-        <p>Observability stack, logging, metrics, alerting</p>
-      </a>
-      <a href="{{ '/docs/cicd/' | relative_url }}" class="category-tile">
-        <i class="fa-solid fa-gears"></i>
-        <h3>CI/CD &amp; Automation</h3>
-        <p>Pipeline design, GitOps, infrastructure as code</p>
-      </a>
-      <a href="{{ '/docs/android-security/' | relative_url }}" class="category-tile">
-        <i class="fa-solid fa-shield-halved"></i>
-        <h3>Android Security Lab</h3>
-        <p>Mobile instrumentation, reverse engineering, SELinux</p>
-      </a>
-      <a href="{{ '/docs/networking/' | relative_url }}" class="category-tile">
-        <i class="fa-solid fa-network-wired"></i>
-        <h3>Networking / OpenWrt</h3>
-        <p>Network engineering, routing, embedded Linux</p>
-      </a>
-      <a href="{{ '/docs/linux/' | relative_url }}" class="category-tile">
-        <i class="fa-brands fa-linux"></i>
-        <h3>Linux Administration</h3>
-        <p>System administration, kernel updates, and automation</p>
-      </a>
-      <a href="{{ '/docs/virtualization/' | relative_url }}" class="category-tile">
-        <i class="fa-solid fa-cloud"></i>
-        <h3>Virtualization &amp; Proxmox</h3>
-        <p>VM templating, QEMU/KVM, and disk management</p>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- Latest Writing Feed -->
-<section class="section latest-section">
-  <div class="container">
-    <h2 class="section-title">Latest Writing</h2>
-    <div class="latest-feed">
-      {% assign all_writing = site.posts | concat: site.research | sort: "date" | reverse %}
-      {% for item in all_writing limit:5 %}
-      <article class="latest-item">
-        <div class="latest-item-meta">
-          <time datetime="{{ item.date | date_to_xmlschema }}">{{ item.date | date: "%b %d, %Y" }}</time>
-          {% if item.collection == "research" %}
-          <span class="badge badge-research">Research</span>
-          {% else %}
-          <span class="badge badge-blog">Blog</span>
+    {% if site.posts.size > 0 %}
+    <div class="post-list">
+      {% for post in site.posts limit:5 %}
+      <article class="post-row">
+        <time class="post-row-date" datetime="{{ post.date | date_to_xmlschema }}">
+          {{ post.date | date: "%b %d, %Y" }}
+        </time>
+        <div class="post-row-body">
+          <h3 class="post-row-title">
+            <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+          </h3>
+          {% if post.excerpt %}
+          <p class="post-row-excerpt">{{ post.excerpt | strip_html | truncate: 140 }}</p>
           {% endif %}
         </div>
-        <h3><a href="{{ item.url | relative_url }}">{{ item.title }}</a></h3>
-        {% if item.excerpt %}<p>{{ item.excerpt | strip_html | truncate: 150 }}</p>{% endif %}
       </article>
       {% endfor %}
     </div>
-  </div>
-</section>
-
-<!-- Research Highlights -->
-{% assign highlights = site.research | sort: "date" | reverse %}
-{% if highlights.size > 0 %}
-<section class="section research-highlights-section">
-  <div class="container">
-    <h2 class="section-title">Research Highlights</h2>
-    <div class="highlights-grid">
-      {% for item in highlights limit:3 %}
-      <article class="highlight-card">
-        <span class="badge badge-research">Research</span>
-        <h3><a href="{{ item.url | relative_url }}">{{ item.title }}</a></h3>
-        <p>{{ item.excerpt | strip_html | truncate: 120 }}</p>
-        <time datetime="{{ item.date | date_to_xmlschema }}">{{ item.date | date: "%B %d, %Y" }}</time>
-      </article>
-      {% endfor %}
+    {% else %}
+    <div class="empty-card">
+      <div class="empty-icon" aria-hidden="true">
+        <i class="fa-regular fa-pen-to-square"></i>
+      </div>
+      <h3>Posts coming soon</h3>
+      <p>I'm clearing the slate. New writing on infrastructure and operations will land here.</p>
+      <a href="{{ '/contact/' | relative_url }}" class="btn btn-ghost">Get in touch</a>
     </div>
+    {% endif %}
   </div>
 </section>
-{% endif %}
 
-<!-- Compact About Block -->
-<section class="section about-compact-section">
+<!-- About teaser -->
+<section class="section section-muted">
   <div class="container">
-    <div class="about-compact">
-      <img src="{{ '/img/headshot1-square4.jpg' | relative_url }}" alt="{{ site.author }}" class="about-compact-photo" loading="lazy">
-      <div class="about-compact-text">
-        <p>{{ site.description }}</p>
-        <a href="{{ '/about/' | relative_url }}" class="btn btn-text">Learn more about me &rarr;</a>
+    <div class="about-teaser">
+      <img
+        src="{{ '/img/headshot1-square4.jpg' | relative_url }}"
+        alt="{{ site.author }}"
+        class="about-teaser-photo"
+        loading="lazy"
+        width="96"
+        height="96"
+      >
+      <div class="about-teaser-copy">
+        <h2 class="section-title tight">A bit about me</h2>
+        <p>
+          Operations engineer based in Dhaka, focused on platform reliability, Kubernetes,
+          and PostgreSQL at scale. I care about clear runbooks, calm incidents, and systems
+          that stay boring in production.
+        </p>
+        <a href="{{ '/about/' | relative_url }}" class="text-link">More about me →</a>
       </div>
     </div>
   </div>

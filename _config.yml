@@ -2,9 +2,9 @@
 # Site Settings
 # ============================================================
 title: Moin Uddin Ahmed
-SEOTitle: Moin Uddin Ahmed — Operations Engineer · DevOps · Security Research
-description: "Field notes on Kubernetes, PostgreSQL, observability, Android security research, and infrastructure troubleshooting."
-keyword: "Moin Uddin Ahmed, DevOps, Kubernetes, PostgreSQL, Platform Reliability, Operations Engineer, Portonics, BRAC University, Bangladesh, ELK Stack, Android Security"
+SEOTitle: Moin Uddin Ahmed — Operations Engineer · DevOps
+description: "Operations engineer writing about infrastructure, reliability, and systems work."
+keyword: "Moin Uddin Ahmed, DevOps, Operations Engineer, Kubernetes, PostgreSQL, Portonics, BRAC University"
 url: "https://marufmoinuddin.github.io"
 baseurl: ""
 header-img: /img/lapnote.jpg
@@ -34,7 +34,6 @@ exclude:
   - Gemfile.lock
   - node_modules
   - vendor
-  - scripts
 
 # ============================================================
 # Plugins (all GitHub Pages whitelisted)
@@ -58,19 +57,8 @@ kramdown:
       start_line: 1
 
 # ============================================================
-# Collections
+# Defaults
 # ============================================================
-collections:
-  docs:
-    output: true
-    permalink: /docs/:path/
-  research:
-    output: true
-    permalink: /research/:path/
-  projects:
-    output: true
-    permalink: /projects/:path/
-
 defaults:
   - scope:
       path: ""
@@ -80,26 +68,9 @@ defaults:
       author: "Moin Uddin Ahmed"
   - scope:
       path: ""
-      type: "docs"
-    values:
-      layout: "doc"
-  - scope:
-      path: ""
-      type: "research"
-    values:
-      layout: "research"
-  - scope:
-      path: ""
-      type: "projects"
-    values:
-      layout: "project"
-  - scope:
-      path: ""
       type: "pages"
     values:
       layout: "page"
-
-
 
 # ============================================================
 # SEO
@@ -111,7 +82,6 @@ social:
     - https://github.com/marufmoinuddin
     - https://linkedin.com/in/marufmoinuddin
     - https://twitter.com/marufmoinuddin
-
 
 # ============================================================
 # Analytics

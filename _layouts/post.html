@@ -6,7 +6,6 @@ layout: default
   <div class="container article-container">
     {% include breadcrumbs.html collection_label="Blog" collection_url="/blog/" %}
 
-    <!-- Article Header -->
     <header class="article-header">
       <h1 class="article-title">{{ page.title }}</h1>
       <div class="article-meta">
@@ -14,21 +13,19 @@ layout: default
           {{ page.date | date: "%B %d, %Y" }}
         </time>
         {% if page.read_time %}
-        <span class="meta-sep">&middot;</span>
+        <span class="meta-sep">·</span>
         <span>{{ page.read_time }} min read</span>
         {% endif %}
         {% if page.category %}
-        <span class="meta-sep">&middot;</span>
-        <a href="{{ '/blog/' | relative_url }}?category={{ page.category | slugify }}" class="category-badge">{{ page.category }}</a>
+        <span class="meta-sep">·</span>
+        <span class="category-badge">{{ page.category }}</span>
         {% endif %}
       </div>
     </header>
 
     <div class="article-layout">
-      <!-- TOC Sidebar (left, desktop) -->
       {% include toc.html %}
 
-      <!-- Main Content -->
       <div class="article-content" id="articleContent">
         {{ content }}
 
@@ -38,6 +35,5 @@ layout: default
     </div>
   </div>
 
-  <!-- Related Posts -->
   {% include related-posts.html %}
 </article>

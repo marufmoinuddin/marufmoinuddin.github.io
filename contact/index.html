@@ -1,32 +1,34 @@
 ---
 layout: page
 title: Contact
-description: "Get in touch with Moin Uddin Ahmed."
+description: "Get in touch."
 ---
 
 <div class="contact-page">
-  <p class="page-lede">The best way to reach me is via email or LinkedIn. I try to respond within 24-48 hours.</p>
+  <p class="page-lede">
+    The best way to reach me is email or LinkedIn. I usually reply within a day or two.
+  </p>
 
   <div class="contact-methods">
-    <div class="contact-card">
-      <i class="fa-regular fa-envelope"></i>
-      <h3>Email</h3>
-      <p><a href="mailto:{{ site.email }}">{{ site.email }}</a></p>
-    </div>
-    <div class="contact-card">
-      <i class="fa-brands fa-linkedin-in"></i>
-      <h3>LinkedIn</h3>
-      <p><a href="https://linkedin.com/in/{{ site.linkedin_username }}" target="_blank" rel="noopener">linkedin.com/in/{{ site.linkedin_username }}</a></p>
-    </div>
-    <div class="contact-card">
-      <i class="fa-brands fa-github"></i>
-      <h3>GitHub</h3>
-      <p><a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener">github.com/{{ site.github_username }}</a></p>
-    </div>
-    <div class="contact-card">
-      <i class="fa-brands fa-x-twitter"></i>
-      <h3>Twitter / X</h3>
-      <p><a href="https://twitter.com/{{ site.twitter_username }}" target="_blank" rel="noopener">@{{ site.twitter_username }}</a></p>
-    </div>
+    <a href="mailto:{{ site.email }}" class="contact-card">
+      <span class="contact-icon"><i class="fa-regular fa-envelope"></i></span>
+      <span class="contact-label">Email</span>
+      <span class="contact-value">{{ site.email }}</span>
+    </a>
+    <a href="https://linkedin.com/in/{{ site.linkedin_username }}" target="_blank" rel="noopener" class="contact-card">
+      <span class="contact-icon"><i class="fa-brands fa-linkedin-in"></i></span>
+      <span class="contact-label">LinkedIn</span>
+      <span class="contact-value">linkedin.com/in/{{ site.linkedin_username }}</span>
+    </a>
+    <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener" class="contact-card">
+      <span class="contact-icon"><i class="fa-brands fa-github"></i></span>
+      <span class="contact-label">GitHub</span>
+      <span class="contact-value">github.com/{{ site.github_username }}</span>
+    </a>
+    <a href="https://twitter.com/{{ site.twitter_username }}" target="_blank" rel="noopener" class="contact-card">
+      <span class="contact-icon"><i class="fa-brands fa-x-twitter"></i></span>
+      <span class="contact-label">Twitter / X</span>
+      <span class="contact-value">@{{ site.twitter_username }}</span>
+    </a>
   </div>
 </div>

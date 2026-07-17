@@ -1,7 +1,16 @@
 <!-- Footer -->
 <footer class="site-footer">
   <div class="container">
-    <div class="footer-content">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <p class="footer-name">{{ site.author }}</p>
+        <p class="footer-tagline">Operations · DevOps · Systems</p>
+      </div>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="{{ '/blog/' | relative_url }}">Blog</a>
+        <a href="{{ '/about/' | relative_url }}">About</a>
+        <a href="{{ '/contact/' | relative_url }}">Contact</a>
+      </nav>
       <div class="footer-links">
         <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener" aria-label="GitHub">
           <i class="fa-brands fa-github"></i>
@@ -19,9 +28,9 @@
           <i class="fa-solid fa-rss"></i>
         </a>
       </div>
-      <p class="footer-text">
-        &copy; {{ site.time | date: '%Y' }} {{ site.author }}. All rights reserved.
-      </p>
     </div>
+    <p class="footer-text">
+      &copy; {{ site.time | date: '%Y' }} {{ site.author }}. All rights reserved.
+    </p>
   </div>
 </footer>

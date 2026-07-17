@@ -2,10 +2,11 @@
 <nav class="navbar" id="navbar" role="navigation">
   <div class="nav-container">
     <a href="{{ '/' | relative_url }}" class="nav-brand">
-      <span class="nav-logo-text">Moin Uddin Ahmed</span>
+      <span class="nav-mark">M</span>
+      <span class="nav-logo-text">Moin Uddin</span>
     </a>
 
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu">
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
       <span></span>
       <span></span>
       <span></span>
@@ -13,15 +14,12 @@
 
     <div class="nav-links" id="navLinks">
       <a href="{{ '/blog/' | relative_url }}" {% if page.url contains '/blog/' %}class="active"{% endif %}>Blog</a>
-      <a href="{{ '/docs/' | relative_url }}" {% if page.url contains '/docs/' %}class="active"{% endif %}>Docs</a>
-      <a href="{{ '/research/' | relative_url }}" {% if page.url contains '/research/' %}class="active"{% endif %}>Research</a>
-      <a href="{{ '/projects/' | relative_url }}" {% if page.url contains '/projects/' %}class="active"{% endif %}>Projects</a>
       <a href="{{ '/about/' | relative_url }}" {% if page.url contains '/about/' %}class="active"{% endif %}>About</a>
       <a href="{{ '/contact/' | relative_url }}" {% if page.url contains '/contact/' %}class="active"{% endif %}>Contact</a>
 
       <div class="nav-actions">
         <button class="nav-search-btn" id="navSearchBtn" aria-label="Search">
-          <i class="fa-solid fa-search"></i>
+          <i class="fa-solid fa-magnifying-glass"></i>
         </button>
         <button class="nav-theme-btn" id="navThemeBtn" aria-label="Toggle theme">
           <i class="fa-solid fa-moon"></i>
