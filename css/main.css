@@ -89,14 +89,6 @@ h4 { font-size: 1.125rem; }
   border-radius: 2px;
 }
 
-/* ---------- Scroll Reveal (AOS overrides) ---------- */
-[data-aos] {
-  pointer-events: none;
-}
-[data-aos].aos-animate {
-  pointer-events: auto;
-}
-
 /* ---------- Glow Hover ---------- */
 .glow-hover {
   transition: box-shadow 0.3s ease, transform 0.3s ease;
@@ -961,11 +953,23 @@ section {
   border-radius: 12px;
   padding: 2rem 1.5rem;
   text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.edu-card:hover {
+  transform: translateY(-3px);
 }
 
 .edu-card.primary {
   border-color: var(--accent-cyan);
   box-shadow: 0 0 12px rgba(0, 217, 255, 0.1);
+  transform: scale(1.04);
+}
+
+@media (max-width: 768px) {
+  .edu-card.primary {
+    transform: none;
+  }
 }
 
 .edu-arc {
@@ -1317,6 +1321,10 @@ section {
 @media (max-width: 768px) {
   .nav-hamburger {
     display: flex;
+  }
+
+  body.nav-open {
+    overflow: hidden;
   }
 
   .nav-links {

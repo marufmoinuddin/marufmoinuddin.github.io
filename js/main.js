@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
     hamburger.addEventListener('click', function () {
       hamburger.classList.toggle('active');
       navLinks.classList.toggle('open');
+      document.body.classList.toggle('nav-open');
     });
 
     // Close mobile menu on link click
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
       link.addEventListener('click', function () {
         hamburger.classList.remove('active');
         navLinks.classList.remove('open');
+        document.body.classList.remove('nav-open');
       });
     });
   }
