@@ -1,13 +1,12 @@
 ---
-layout: post
+layout: doc
 title: "ETL Server Setup Guide: Apache Airflow & PipelineWise"
-date: 2026-07-17
-category: CI/CD
-tags: [airflow, cicd, data-engineering, docker, high-availability, linux, pipelinewise, postgresql, ubuntu]
-excerpt: "This guide provides clear, step-by-step instructions for setting up Apache Airflow and PipelineWise to manage and orchestrate ETL (Extract, Transform, Load) pipelines. It is design"
-read_time: 6
+category: cicd
 order: 40
+last_updated: 2026-07-17
+tags: ['airflow', 'cicd', 'data-engineering', 'docker', 'high-availability', 'linux', 'pipelinewise', 'postgresql', 'ubuntu']
 ---
+
 
 # ETL Server Setup Guide: Apache Airflow & PipelineWise
 

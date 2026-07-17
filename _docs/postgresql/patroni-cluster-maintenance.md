@@ -1,12 +1,10 @@
 ---
-layout: post
+layout: doc
 title: "Patroni Cluster Maintenance Procedures"
-date: 2026-07-15
-category: PostgreSQL
-tags: [postgresql, patroni, maintenance, ha]
-excerpt: "Patroni makes switchovers painless:"
-read_time: 1
+category: postgresql
 order: 1
+last_updated: 2026-07-15
+tags: [postgresql, patroni, maintenance, ha]
 ---
 
 ## Scheduled Switchover

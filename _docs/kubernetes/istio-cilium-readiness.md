@@ -1,14 +1,11 @@
 ---
-layout: post
+layout: doc
 title: "Resolving Istio CNI and Cilium Conflict in Kubernetes"
-date: 2026-07-17
-category: Kubernetes
-tags: [cilium, container, envoy, high-availability, istio, kubernetes]
-excerpt: "This document provides a step-by-step guide to resolve a reconciliation loop issue in the Istio CNI plugin when used alongside Cilium as the primary Container Network Interface (CN"
-read_time: 7
+category: kubernetes
 order: 10
+last_updated: 2026-07-17
+tags: ['cilium', 'container', 'envoy', 'high-availability', 'istio', 'kubernetes']
 ---
-
 # Resolving Istio CNI and Cilium Conflict in Kubernetes
 
 ## Overview

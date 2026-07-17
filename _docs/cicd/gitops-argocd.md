@@ -1,12 +1,10 @@
 ---
-layout: post
+layout: doc
 title: "GitOps with ArgoCD"
-date: 2026-06-15
-category: CI/CD
-tags: [gitops, argocd, kubernetes, cicd]
-excerpt: "GitOps is a paradigm where the desired state of infrastructure is declared in Git repositories, and automated operators continuously reconcile the live state with the declared stat"
-read_time: 1
+category: cicd
 order: 1
+last_updated: 2026-06-15
+tags: [gitops, argocd, kubernetes, cicd]
 ---
 
 ## What is GitOps?

@@ -1,0 +1,38 @@
+---
+layout: default
+---
+
+<article class="doc-page">
+  <div class="container doc-container">
+    {% include breadcrumbs.html collection_label="Documentation" collection_url="/docs/" category_label=page.category category_slug=page.category %}
+
+    <div class="doc-layout">
+      <!-- Left Sidebar -->
+      {% include doc-sidebar.html %}
+
+      <!-- Main Content -->
+      <div class="doc-content" id="docContent">
+        <header class="doc-header">
+          <h1 class="doc-title">{{ page.title }}</h1>
+          {% if page.last_updated %}
+          <p class="doc-last-updated">Last updated: <time datetime="{{ page.last_updated | date_to_xmlschema }}">{{ page.last_updated | date: "%B %d, %Y" }}</time></p>
+          {% endif %}
+        </header>
+
+        {{ content }}
+
+        <!-- Edit on GitHub -->
+        <div class="doc-footer">
+          <a href="https://github.com/{{ site.github_username }}/{{ site.github_username }}.github.io/edit/main/{{ page.path }}" target="_blank" rel="noopener" class="btn btn-text">
+            <i class="fa-brands fa-github"></i> Edit this page on GitHub
+          </a>
+        </div>
+
+        {% include article-tags.html %}
+      </div>
+
+      <!-- Right TOC -->
+      {% include toc.html %}
+    </div>
+  </div>
+</article>

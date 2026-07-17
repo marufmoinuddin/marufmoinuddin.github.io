@@ -1,0 +1,20 @@
+---
+layout: page
+title: Documentation
+description: "Runbooks, guides, and reference documentation for the tools and systems I work with."
+---
+
+<p class="page-lede">Field-tested runbooks and reference guides across the infrastructure and security domains I operate in.</p>
+
+<div class="doc-index-grid">
+  {% assign categories = site.docs | group_by: "category" | sort: "name" %}
+  {% for cat in categories %}
+  {% assign cat_slug = cat.name | slugify %}
+  <a href="{{ '/docs/' | relative_url }}{{ cat_slug }}/" class="doc-index-card">
+    <div class="doc-index-card-body">
+      <h3>{{ cat.name | capitalize }}</h3>
+      <p>{{ cat.items.size }} page{% if cat.items.size != 1 %}s{% endif %}</p>
+    </div>
+  </a>
+  {% endfor %}
+</div>

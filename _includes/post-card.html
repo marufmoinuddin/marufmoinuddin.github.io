@@ -1,20 +1,26 @@
-<article class="post-card" data-category="{{ include.post.category }}">
-  <div class="post-card-meta">
-    <time datetime="{{ include.post.date | date_to_xmlschema }}">{{ include.post.date | date: "%b %d, %Y" }}</time>
-    {% if include.post.category %}
-    <span class="badge badge--category">{{ include.post.category }}</span>
+<article class="post-card"{% if include.post.category %} data-category="{{ include.post.category }}"{% endif %}>
+  <div class="post-card-body">
+    <div class="post-card-meta">
+      <time datetime="{{ include.post.date | date_to_xmlschema }}">
+        {{ include.post.date | date: "%B %d, %Y" }}
+      </time>
+      {% if include.post.category %}
+      <span class="post-card-badge">{{ include.post.category }}</span>
+      {% endif %}
+      {% if include.post.read_time %}
+      <span class="post-card-readtime">{{ include.post.read_time }} min read</span>
+      {% endif %}
+    </div>
+    <h3 class="post-card-title">
+      <a href="{{ include.post.url | relative_url }}">{{ include.post.title }}</a>
+    </h3>
+    {% if include.post.excerpt %}
+    <p class="post-card-excerpt">{{ include.post.excerpt | strip_html | truncate: 200 }}</p>
     {% endif %}
-    {% if include.post.read_time %}
-    <span>{{ include.post.read_time }} min read</span>
-    {% endif %}
-  </div>
-  <h2><a href="{{ include.post.url | relative_url }}">{{ include.post.title }}</a></h2>
-  {% if include.post.excerpt %}
-  <p>{{ include.post.excerpt | strip_html | truncate: 200 }}</p>
-  {% endif %}
-  <div class="post-card-tags">
-    {% for tag in include.post.tags limit:4 %}
-    <a href="{{ '/tags/' | relative_url }}#{{ tag | slugify }}" class="tag">{{ tag }}</a>
-    {% endfor %}
+    <div class="post-card-tags">
+      {% for tag in include.post.tags limit:4 %}
+      <a href="{{ '/tags/' | relative_url }}#{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
+      {% endfor %}
+    </div>
   </div>
 </article>

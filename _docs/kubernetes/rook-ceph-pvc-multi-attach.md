@@ -1,14 +1,11 @@
 ---
-layout: post
+layout: doc
 title: "Rook Ceph RBD PVC Troubleshooting Guide for Multi-Attach and MountDevice Failures"
-date: 2026-07-17
-category: Kubernetes
-tags: [ceph, container, high-availability, kubernetes, pvc, rbd, rook, tde]
-excerpt: "This guide provides a detailed, step-by-step process to resolve stuck Rook Ceph RBD volumes in Kubernetes, particularly when pods encounter errors such as:"
-read_time: 7
+category: kubernetes
 order: 20
+last_updated: 2026-07-17
+tags: ['ceph', 'container', 'high-availability', 'kubernetes', 'pvc', 'rbd', 'rook', 'tde']
 ---
-
 # 🚑 Rook Ceph RBD PVC Troubleshooting Guide for Multi-Attach and MountDevice Failures
 
 This guide provides a detailed, step-by-step process to resolve **stuck Rook Ceph RBD volumes** in Kubernetes, particularly when pods encounter errors such as:

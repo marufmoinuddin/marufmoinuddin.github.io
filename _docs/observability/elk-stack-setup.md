@@ -1,12 +1,10 @@
 ---
-layout: post
+layout: doc
 title: "ELK Stack Setup and Configuration"
-date: 2026-06-20
-category: Observability
-tags: [elasticsearch, logstash, kibana, elk, monitoring, observability]
-excerpt: "Log Sources → Filebeat → Logstash → Elasticsearch → Kibana"
-read_time: 1
+category: observability
 order: 1
+last_updated: 2026-06-20
+tags: [elasticsearch, logstash, kibana, elk, monitoring]
 ---
 
 ## Architecture
