@@ -2,11 +2,10 @@
 layout: doc
 title: "Fix Prometheus Pod Forbidden Errors"
 category: observability
-order: 99
-last_updated: 2025-03-06
-tags: [prometheus, kubernetes, rbac, monitoring, troubleshooting]
+order: 90
+last_updated: 2026-07-17
+tags: ['high-availability', 'monitoring', 'observability', 'postgresql', 'prometheus']
 ---
-
 # Fix Prometheus Pod Forbidden Errors
 
 ## Issue
@@ -127,4 +126,3 @@ If the errors persist:
 2. **Wider Permissions**: The logs only mention `pods`, but Prometheus might need access to other resources (e.g., `services`, `endpoints`). If you see new "forbidden" errors, we can expand the `ClusterRole`.
 
 3. **Operator Docs**: Since this is part of the Crunchy PostgreSQL Operator, double-check their monitoring setup guide (e.g., on [Crunchy Data’s site](https://www.crunchydata.com) or GitHub). They might expect a specific RBAC config you didn’t apply.
-

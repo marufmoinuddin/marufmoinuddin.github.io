@@ -2,11 +2,10 @@
 layout: doc
 title: "Creating a Debian 12 Cloud-Init Template in Proxmox"
 category: virtualization
-order: 99
-last_updated: 2025-02-11
-tags: [proxmox, debian, cloud-init, virtualization, template]
+order: 55
+last_updated: 2026-07-17
+tags: ['cloud-init', 'debian', 'high-availability', 'proxmox', 'qcow2', 'qemu', 'virtualization']
 ---
-
 # Creating a Debian 12 Cloud-Init Template in Proxmox: A Step-by-Step Guide
 
 ## Introduction

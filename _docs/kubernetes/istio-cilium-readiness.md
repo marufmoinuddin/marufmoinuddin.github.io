@@ -2,11 +2,10 @@
 layout: doc
 title: "Resolving Istio CNI and Cilium Conflict in Kubernetes"
 category: kubernetes
-order: 99
-last_updated: 2025-05-20
-tags: [kubernetes, istio, cilium, cni, networking, service-mesh]
+order: 10
+last_updated: 2026-07-17
+tags: ['cilium', 'container', 'envoy', 'high-availability', 'istio', 'kubernetes']
 ---
-
 # Resolving Istio CNI and Cilium Conflict in Kubernetes
 
 ## Overview

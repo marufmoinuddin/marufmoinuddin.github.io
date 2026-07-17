@@ -1338,6 +1338,75 @@ pre:hover .code-copy-btn {
   color: var(--text-muted);
 }
 
+/* --- Doc Category Header --- */
+.doc-category-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.doc-category-icon {
+  font-size: 2rem;
+  color: var(--accent-cyan);
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.doc-category-title {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.doc-category-desc {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* --- Doc List (Category page) --- */
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.doc-list-card {
+  display: block;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  transition: border-color var(--transition), transform var(--transition);
+}
+
+.doc-list-card:hover {
+  border-color: var(--accent-cyan);
+  transform: translateX(4px);
+}
+
+.doc-list-card h3 {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+
+.doc-list-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.doc-list-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem 1rem;
+  font-style: italic;
+}
+
 /* --- Research Page --- */
 .research-grid {
   display: flex;

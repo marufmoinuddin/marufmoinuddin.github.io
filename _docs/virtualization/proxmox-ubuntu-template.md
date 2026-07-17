@@ -2,11 +2,10 @@
 layout: doc
 title: "Creating an Ubuntu 24.04 Cloud-Init Template in Proxmox"
 category: virtualization
-order: 99
-last_updated: 2025-02-10
-tags: [proxmox, ubuntu, cloud-init, virtualization, template]
+order: 50
+last_updated: 2026-07-17
+tags: ['cloud-init', 'high-availability', 'proxmox', 'qemu', 'ubuntu', 'virtualization']
 ---
-
 # Creating an Ubuntu 24.04 Cloud-Init Template in Proxmox: A Step-by-Step Guide
 
 ## Introduction

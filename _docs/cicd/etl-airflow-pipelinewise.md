@@ -1,11 +1,12 @@
 ---
 layout: doc
-title: "ETL Server Setup: Apache Airflow & PipelineWise"
+title: "ETL Server Setup Guide: Apache Airflow & PipelineWise"
 category: cicd
-order: 99
-last_updated: 2025-07-29
-tags: [etl, airflow, pipelinewise, data-engineering, cicd]
+order: 40
+last_updated: 2026-07-17
+tags: ['airflow', 'cicd', 'data-engineering', 'docker', 'high-availability', 'linux', 'pipelinewise', 'postgresql', 'ubuntu']
 ---
+
 
 # ETL Server Setup Guide: Apache Airflow & PipelineWise
 
@@ -410,4 +411,3 @@ You now have:
 Use Airflow to schedule and monitor PipelineWise tasks, which extract data from sources and load it into targets like data warehouses. For advanced setups (e.g., distributed Airflow executors or high-availability configurations), refer to:
 - [Apache Airflow Documentation](https://airflow.apache.org/docs/)
 - [PipelineWise Documentation](https://transferwise.github.io/pipelinewise/)
-

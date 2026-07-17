@@ -1,12 +1,27 @@
 ---
 layout: doc
-title: "Apache Superset Setup with Docker and PostgreSQL"
+title: "Apache Superset Setup with PostgreSQL 15"
 category: observability
-order: 99
-last_updated: 2025-01-02
-tags: [superset, docker, postgresql, observability, analytics]
+order: 70
+last_updated: 2026-07-17
+tags: ['superset', 'docker', 'postgresql', 'observability', 'analytics']
+---
+To set up **Apache Superset** using Docker along with a **PostgreSQL 15** container, follow the steps outlined below. This guide assumes you have Docker installed on your machine.
+
+### Prerequisites
+
+1. Docker installed on your machine. If you don’t have it installed, you can find installation instructions [here](https://docs.docker.com/get-docker/).
+2. Basic understanding of Docker commands.
+
+### Step-by-Step Guide
+
 ---
 
+#### 1. **Pull the Docker Images**
+
+First, pull the official Docker images for Superset and PostgreSQL.
+
+```bash
 # Pull Superset image
 docker pull apache/superset:latest
 

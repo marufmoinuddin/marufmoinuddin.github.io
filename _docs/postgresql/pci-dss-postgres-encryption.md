@@ -1,12 +1,11 @@
 ---
 layout: doc
-title: "PCI DSS Compliance for PostgreSQL Encryption"
+title: "PCI DSS Compliance Documentation for PostgreSQL Encryption"
 category: postgresql
-order: 99
-last_updated: 2025-01-07
-tags: [postgresql, pci-dss, encryption, security, compliance]
+order: 30
+last_updated: 2026-07-17
+tags: ['compliance', 'encryption', 'high-availability', 'pci-dss', 'postgresql']
 ---
-
 ## PCI DSS Compliance Documentation for PostgreSQL Encryption
 
 This guide aims to help you implement PostgreSQL encryption strategies that meet **PCI DSS (Payment Card Industry Data Security Standard)** compliance. By focusing on key areas like **key management**, **column-level encryption**, **access control**, **auditing**, and **encryption at rest**, you’ll be able to secure sensitive data, such as credit card information, stored in PostgreSQL databases. Below is an expanded explanation with examples to clarify each step and ensure you don’t have any questions.

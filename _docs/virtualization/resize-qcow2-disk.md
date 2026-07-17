@@ -1,12 +1,11 @@
 ---
 layout: doc
-title: "Resize and Expand a QCOW2 Disk Image"
+title: "Simple Guide to Resize and Expand a QCOW2 Disk Image"
 category: virtualization
-order: 99
-last_updated: 2025-01-02
-tags: [qcow2, disk-resize, kvm, qemu, virtualization, centos]
+order: 80
+last_updated: 2026-07-17
+tags: ['high-availability', 'libvirt', 'proxmox', 'qcow2', 'qemu', 'virtualization']
 ---
-
 # Simple Guide to Resize and Expand a QCOW2 Disk Image for CentOS Stream 9
 
 This guide will walk you through the steps to resize a QCOW2 disk image on CentOS Stream 9. By following these instructions, you'll be able to create a new, larger disk image and expand the partition inside it to take advantage of the new space. Don’t worry—everything is explained step by step!

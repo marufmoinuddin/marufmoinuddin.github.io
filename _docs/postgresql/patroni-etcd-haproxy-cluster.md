@@ -2,11 +2,10 @@
 layout: doc
 title: "PostgreSQL 15 High Availability Cluster with Patroni"
 category: postgresql
-order: 99
+order: 5
 last_updated: 2026-07-17
-tags: [postgresql, patroni, etcd, haproxy, high-availability]
+tags: ['etcd', 'haproxy', 'high-availability', 'kvm', 'libvirt', 'patroni', 'postgresql', 'qemu', 'ubuntu']
 ---
-
 # PostgreSQL 15 High Availability Cluster with Patroni
 
 This documentation provides a comprehensive guide to setting up a high availability PostgreSQL cluster using Patroni on Ubuntu 22.04.4. The architecture includes three PostgreSQL nodes (one master and two replicas), an etcd node, and an HAProxy node for load balancing.
