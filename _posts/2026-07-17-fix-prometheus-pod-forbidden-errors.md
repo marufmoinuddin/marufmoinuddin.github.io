@@ -1,11 +1,14 @@
 ---
-layout: doc
+layout: post
 title: "Fix Prometheus Pod Forbidden Errors"
-category: observability
+date: 2026-07-17
+category: Observability
+tags: [high-availability, monitoring, observability, postgresql, prometheus]
+excerpt: "Troubleshooting forbidden errors in Prometheus pod logs caused by missing RBAC permissions for cluster-wide pod listing and watching."
+read_time: 2
 order: 90
-last_updated: 2026-07-17
-tags: ['high-availability', 'monitoring', 'observability', 'postgresql', 'prometheus']
 ---
+
 # Fix Prometheus Pod Forbidden Errors
 
 ## Issue

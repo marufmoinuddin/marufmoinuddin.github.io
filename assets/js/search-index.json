@@ -2,7 +2,8 @@
 layout: null
 permalink: /assets/js/search-index.json
 ---
-{% assign all_items = site.posts | concat: site.docs | concat: site.research | sort: "date" | reverse %}
+{% assign tagged_posts = site.posts %}
+{% assign all_items = tagged_posts | concat: site.research | sort: "date" | reverse %}
 [
 {% for item in all_items %}
   {
@@ -10,7 +11,7 @@ permalink: /assets/js/search-index.json
     "url": "{{ item.url | relative_url }}",
     "excerpt": {{ item.excerpt | strip_html | truncate: 300 | jsonify }},
     "tags": {{ item.tags | jsonify }},
-    "collection": "{% if item.collection == 'posts' %}Blog{% elsif item.collection == 'docs' %}Docs{% elsif item.collection == 'research' %}Research{% else %}Post{% endif %}",
+    "collection": "{% if item.collection == 'posts' %}Blog{% elsif item.collection == 'research' %}Research{% else %}Post{% endif %}",
     "date": "{{ item.date | date: '%B %d, %Y' }}"
   }{% unless forloop.last %},{% endunless %}
 {% endfor %}

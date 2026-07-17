@@ -1,11 +1,14 @@
 ---
-layout: doc
+layout: post
 title: "Creating a Debian 12 Cloud-Init Template in Proxmox"
-category: virtualization
+date: 2026-07-17
+category: Virtualization
+tags: [cloud-init, debian, high-availability, proxmox, qcow2, qemu, virtualization]
+excerpt: "This guide will walk you through creating a Debian 12 (Bookworm) cloud-init template in Proxmox using BIOS boot (seabios) and Q35 machine type. We’ll start from downloading the ima"
+read_time: 4
 order: 55
-last_updated: 2026-07-17
-tags: ['cloud-init', 'debian', 'high-availability', 'proxmox', 'qcow2', 'qemu', 'virtualization']
 ---
+
 # Creating a Debian 12 Cloud-Init Template in Proxmox: A Step-by-Step Guide
 
 ## Introduction

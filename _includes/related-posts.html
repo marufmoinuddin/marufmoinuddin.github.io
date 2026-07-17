@@ -1,16 +1,22 @@
 {% if page.tags.size > 0 %}
-<section class="related-posts">
-  <h3 class="related-posts-title">Related Posts</h3>
-  <div class="related-posts-grid">
-    {% assign maxRelated = 3 %}
-    {% assign count = 0 %}
-    {% assign firstTag = page.tags | first %}
-    {% for post in site.posts %}
-      {% if post.url != page.url and post.tags contains firstTag and count < maxRelated %}
-        {% include post-card.html post=post %}
-        {% assign count = count | plus: 1 %}
-      {% endif %}
-    {% endfor %}
+{% assign firstTag = page.tags | first %}
+{% assign related = "" | split: "" %}
+{% for post in site.posts %}
+  {% if post.url != page.url and post.tags contains firstTag %}
+    {% assign related = related | push: post %}
+  {% endif %}
+  {% if related.size >= 3 %}{% break %}{% endif %}
+{% endfor %}
+{% if related.size > 0 %}
+<div class="related">
+  <div class="container">
+    <h3>Related Posts</h3>
+    <div class="card-grid card-grid--3">
+      {% for post in related %}
+      {% include post-card.html post=post %}
+      {% endfor %}
+    </div>
   </div>
-</section>
+</div>
+{% endif %}
 {% endif %}

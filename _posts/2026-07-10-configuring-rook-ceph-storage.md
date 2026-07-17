@@ -1,10 +1,12 @@
 ---
-layout: doc
+layout: post
 title: "Configuring Rook Ceph Storage"
-category: kubernetes
-order: 1
-last_updated: 2026-07-10
+date: 2026-07-10
+category: Kubernetes
 tags: [kubernetes, rook, ceph, storage, pvc]
+excerpt: "Rook Ceph brings Ceph storage into Kubernetes as a native operator. This guide covers deploying a production-ready Rook Ceph cluster and using it for PVCs."
+read_time: 1
+order: 1
 ---
 
 ## Overview

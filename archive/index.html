@@ -1,34 +1,27 @@
 ---
 layout: page
 title: Archive
-description: "All content grouped by year and month."
 ---
 
-<div class="archive-page">
-  {% assign all_content = site.posts | concat: site.research | sort: "date" | reverse %}
-  {% assign grouped = all_content | group_by_exp: "item", "item.date | date: '%Y'" %}
-  
-  {% for year in grouped %}
-  <section class="archive-year">
-    <h2 class="archive-year-title">{{ year.name }}</h2>
-    {% assign months = year.items | group_by_exp: "item", "item.date | date: '%B'" %}
-    {% for month in months %}
-    <div class="archive-month">
-      <h3 class="archive-month-title">{{ month.name }}</h3>
-      <ul class="archive-list">
-        {% for item in month.items %}
-        <li>
-          <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
-          <span class="archive-meta">
-            {% if item.collection == "posts" %}Blog{% elsif item.collection == "research" %}Research{% else %}Post{% endif %}
-            &middot;
-            {{ item.date | date: "%b %d" }}
-          </span>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endfor %}
-  </section>
+{% assign all_content = site.posts | concat: site.research | sort: "date" | reverse %}
+{% assign grouped = all_content | group_by_exp: "item", "item.date | date: '%Y'" %}
+
+{% for year in grouped %}
+<section class="archive-year">
+  <h2>{{ year.name }}</h2>
+  {% assign months = year.items | group_by_exp: "item", "item.date | date: '%B'" %}
+  {% for month in months %}
+  <div class="archive-month">
+    <h3>{{ month.name }}</h3>
+    <ul class="archive-list">
+      {% for item in month.items %}
+      <li>
+        <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+        <span>{{ item.date | date: "%b %d" }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
   {% endfor %}
-</div>
+</section>
+{% endfor %}

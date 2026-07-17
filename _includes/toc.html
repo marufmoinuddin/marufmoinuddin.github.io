@@ -1,11 +1,6 @@
 {% if content contains '<h2' or content contains '<h3' %}
-<aside class="toc-wrapper" id="tocWrapper">
-  <div class="toc-header">
-    <h5>On this page</h5>
-    <button class="toc-toggle" id="tocToggle" aria-label="Toggle table of contents">
-      <i class="fa-solid fa-chevron-up"></i>
-    </button>
-  </div>
-  <nav class="toc-body" id="tocBody"></nav>
+<aside class="toc" id="tocWrapper">
+  <p class="toc-title">On this page</p>
+  <nav id="tocNav"></nav>
 </aside>
 {% endif %}

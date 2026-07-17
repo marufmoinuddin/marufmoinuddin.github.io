@@ -1,59 +1,55 @@
 ---
 layout: page
 title: Blog
-description: "Thoughts on infrastructure, DevOps, Kubernetes, and security."
 ---
 
-<!-- Featured Post Banner -->
 {% assign featured = site.posts | where: "featured", true | first %}
 {% if featured %}
-<article class="featured-banner">
+<div class="featured-banner">
   <div class="featured-banner-body">
-    <span class="badge badge-featured">Featured</span>
+    <span class="badge badge--featured">Featured</span>
     <h2><a href="{{ featured.url | relative_url }}">{{ featured.title }}</a></h2>
     <p>{{ featured.excerpt | strip_html | truncate: 250 }}</p>
     <div class="featured-banner-meta">
       <time datetime="{{ featured.date | date_to_xmlschema }}">{{ featured.date | date: "%B %d, %Y" }}</time>
-      {% if featured.read_time %}<span>{{ featured.read_time }} min read</span>{% endif %}
     </div>
   </div>
-</article>
+</div>
 {% endif %}
 
-<!-- Filter Chips -->
 <div class="filter-chips">
-  <button class="chip active" data-filter="all">All</button>
-  <button class="chip" data-filter="DevOps">DevOps</button>
-  <button class="chip" data-filter="Kubernetes">Kubernetes</button>
-  <button class="chip" data-filter="PostgreSQL">PostgreSQL</button>
-  <button class="chip" data-filter="Observability">Observability</button>
-  <button class="chip" data-filter="Security">Security</button>
-  <button class="chip" data-filter="Android">Android</button>
-  <button class="chip" data-filter="Networking">Networking</button>
-  <button class="chip" data-filter="Linux">Linux</button>
+  <button class="tag active" data-filter="all">All</button>
+  <button class="tag" data-filter="Kubernetes">Kubernetes</button>
+  <button class="tag" data-filter="PostgreSQL">PostgreSQL</button>
+  <button class="tag" data-filter="Observability">Observability</button>
+  <button class="tag" data-filter="CI/CD">CI/CD</button>
+  <button class="tag" data-filter="Android Security">Android Security</button>
+  <button class="tag" data-filter="Networking">Networking</button>
+  <button class="tag" data-filter="Linux">Linux</button>
+  <button class="tag" data-filter="Virtualization">Virtualization</button>
+  <button class="tag" data-filter="DevOps">DevOps</button>
 </div>
 
-<!-- Search Input -->
 <div class="blog-search">
   <input type="text" class="search-input" id="blogSearch" placeholder="Search posts..." aria-label="Search blog posts">
 </div>
 
-<!-- Post Grid -->
-<div class="post-grid" id="postGrid">
+<div class="post-grid card-grid card-grid--2" id="postGrid">
   {% for post in paginator.posts %}
-  {% include post-card.html post=post %}
+  <div data-category="{{ post.category }}">
+    {% include post-card.html post=post %}
+  </div>
   {% endfor %}
 </div>
 
-<!-- Pagination -->
 {% if paginator.total_pages > 1 %}
 <nav class="pagination">
   {% if paginator.previous_page %}
-  <a href="{{ paginator.previous_page_path | relative_url }}" class="pag-prev">&larr; Newer Posts</a>
+  <a href="{{ paginator.previous_page_path | relative_url }}" class="pag-link pag-prev">&larr; Newer</a>
   {% endif %}
-  <span class="pag-info">Page {{ paginator.page }} of {{ paginator.total_pages }}</span>
+  <span class="pag-label">Page {{ paginator.page }} of {{ paginator.total_pages }}</span>
   {% if paginator.next_page %}
-  <a href="{{ paginator.next_page_path | relative_url }}" class="pag-next">Older Posts &rarr;</a>
+  <a href="{{ paginator.next_page_path | relative_url }}" class="pag-link pag-next">Older &rarr;</a>
   {% endif %}
 </nav>
 {% endif %}

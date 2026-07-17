@@ -1,11 +1,14 @@
 ---
-layout: doc
+layout: post
 title: "Install Latest Kernel in Ubuntu and Auto-Load `rbd` module"
-category: linux
+date: 2026-07-17
+category: Linux
+tags: [ceph, high-availability, kernel, linux, rbd, ubuntu]
+excerpt: "This guide provides a robust script to install the latest Ubuntu kernel (6.14.x or higher) with linux-modules-extra from http://archive.ubuntu.com/ubuntu/pool/main/l/linux/ and ens"
+read_time: 4
 order: 60
-last_updated: 2026-07-17
-tags: ['ceph', 'high-availability', 'kernel', 'linux', 'rbd', 'ubuntu']
 ---
+
 ### Install Latest Kernel in Ubuntu and Auto-Load `rbd` module 
 
 This guide provides a robust script to install the latest Ubuntu kernel (6.14.x or higher) with `linux-modules-extra` from `http://archive.ubuntu.com/ubuntu/pool/main/l/linux/` and ensures the Ceph RBD module (`rbd.ko`) loads automatically at boot 
