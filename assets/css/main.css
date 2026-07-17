@@ -35,6 +35,19 @@
   --badge-completed:   #00D9FF;
 }
 
+/* Light mode overrides */
+[data-theme="light"] {
+  --bg-primary:    #FFFFFF;
+  --bg-surface:    #F3F4F6;
+  --bg-elevated:   #E5E7EB;
+  --accent-cyan:   #0284C7;
+  --accent-green:  #16A34A;
+  --text-primary:  #111827;
+  --text-muted:    #6B7280;
+  --border-color:  #D1D5DB;
+  --code-bg:       #F9FAFB;
+}
+
 /* --- Reset & Base --- */
 *, *::before, *::after {
   box-sizing: border-box;

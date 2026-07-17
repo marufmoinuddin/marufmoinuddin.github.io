@@ -27,10 +27,36 @@
     // Code copy buttons
     initCodeCopy();
 
+    // Theme toggle (dark/light mode)
+    initThemeToggle();
+
     // Smooth scroll for anchor links
     initSmoothScroll();
 
   });
+
+  // --- Dark/Light Mode Toggle ---
+  function initThemeToggle() {
+    var btn = document.getElementById('navThemeBtn');
+    if (!btn) return;
+
+    var icon = btn.querySelector('i');
+    // Sync icon with current theme
+    var currentTheme = document.documentElement.getAttribute('data-theme');
+    if (icon) {
+      icon.className = currentTheme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    }
+
+    btn.addEventListener('click', function() {
+      var current = document.documentElement.getAttribute('data-theme') || 'dark';
+      var next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      if (icon) {
+        icon.className = next === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      }
+    });
+  }
 
   // --- Mobile Navigation ---
   function initMobileNav() {
@@ -240,8 +266,13 @@
 
   // --- Code Copy Buttons ---
   function initCodeCopy() {
-    var codeBlocks = document.querySelectorAll('.article-content pre, .doc-content pre');
-    codeBlocks.forEach(function(pre) {
+    // Only target the outermost pre that directly contains a <code> element.
+    // This avoids duplicating buttons on Rouge line-number pre elements.
+    document.querySelectorAll('.article-content pre > code, .doc-content pre > code').forEach(function(code) {
+      var pre = code.parentElement;
+      // Skip if already has a copy button or is a line-number block
+      if (pre.classList.contains('lineno') || pre.querySelector('.code-copy-btn')) return;
+
       var btn = document.createElement('button');
       btn.className = 'code-copy-btn';
       btn.textContent = 'Copy';
@@ -249,8 +280,6 @@
       pre.appendChild(btn);
 
       btn.addEventListener('click', function() {
-        var code = pre.querySelector('code');
-        if (!code) return;
         var text = code.textContent;
 
         if (navigator.clipboard) {

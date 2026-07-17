@@ -11,7 +11,7 @@ layout: default
       <a href="{{ '/docs/' | relative_url }}">Documentation</a>
       <span class="sep">/</span>
       {% if page.category %}
-      <a href="{{ '/docs/' | relative_url }}{{ page.category | slugify }}">{{ page.category | capitalize }}</a>
+      <a href="{{ '/docs/' | relative_url }}{{ page.category | slugify }}/">{{ page.category | capitalize }}</a>
       <span class="sep">/</span>
       {% endif %}
       <span>{{ page.title }}</span>
