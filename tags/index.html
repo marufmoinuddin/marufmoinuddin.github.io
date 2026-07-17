@@ -10,7 +10,7 @@ description: "Browse content by tag."
   <div class="tag-cloud">
     {% for tag in all_tags %}
     {% assign slug = tag | slugify %}
-    <a href="{{ '/tags/' | relative_url }}{{ slug }}" class="tag-cloud-item">{{ tag }}</a>
+    <a href="{{ '/tags/' | relative_url }}#{{ slug }}" class="tag-cloud-item">{{ tag }}</a>
     {% endfor %}
   </div>
 

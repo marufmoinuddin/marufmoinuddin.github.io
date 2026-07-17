@@ -43,7 +43,7 @@
   --accent-cyan:   #0284C7;
   --accent-green:  #16A34A;
   --text-primary:  #111827;
-  --text-muted:    #6B7280;
+  --text-muted:    #5B6570;
   --border-color:  #D1D5DB;
   --code-bg:       #F9FAFB;
 }
@@ -82,7 +82,13 @@ a {
 }
 
 a:hover {
-  color: #66e6ff;
+  color: var(--accent-cyan);
+  filter: brightness(1.2);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
 }
 
 ::selection {
@@ -104,7 +110,7 @@ a:hover {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(11, 15, 20, 0.85);
+  background: color-mix(in srgb, var(--bg-primary) 85%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
@@ -303,39 +309,40 @@ a:hover {
   border: 1px solid transparent;
 }
 
-.btn-primary {
+a.btn-primary {
   background: var(--accent-cyan);
-  color: var(--bg-primary) !important;
+  color: var(--bg-primary);
   border-color: var(--accent-cyan);
 }
 
-.btn-primary:hover {
-  background: #33e0ff;
-  border-color: #33e0ff;
+a.btn-primary:hover {
+  background: color-mix(in srgb, var(--accent-cyan) 80%, white);
+  border-color: color-mix(in srgb, var(--accent-cyan) 80%, white);
   transform: translateY(-1px);
 }
 
-.btn-outline {
+a.btn-outline {
   background: transparent;
-  color: var(--text-primary) !important;
+  color: var(--text-primary);
   border-color: var(--border-color);
 }
 
-.btn-outline:hover {
+a.btn-outline:hover {
   border-color: var(--accent-cyan);
-  color: var(--accent-cyan) !important;
+  color: var(--accent-cyan);
   transform: translateY(-1px);
 }
 
-.btn-text {
+a.btn-text {
   background: transparent;
-  color: var(--accent-cyan) !important;
+  color: var(--accent-cyan);
   padding: 0.5rem 0;
   border: none;
 }
 
-.btn-text:hover {
-  color: #66e6ff !important;
+a.btn-text:hover {
+  color: var(--accent-cyan);
+  filter: brightness(1.2);
 }
 
 /* --- Featured Posts Grid --- */
@@ -1687,7 +1694,7 @@ pre:hover .code-copy-btn {
   gap: 0.75rem;
 }
 
-.btn-social {
+a.btn-social {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -1695,7 +1702,7 @@ pre:hover .code-copy-btn {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: var(--text-primary) !important;
+  color: var(--text-primary);
   font-size: 0.9rem;
   transition: border-color var(--transition);
 }
@@ -1983,7 +1990,7 @@ pre:hover .code-copy-btn {
 .search-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(11, 15, 20, 0.95);
+  background: color-mix(in srgb, var(--bg-primary) 95%, transparent);
   z-index: 2000;
   display: none;
   align-items: flex-start;

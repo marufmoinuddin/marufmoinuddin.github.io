@@ -41,27 +41,7 @@ description: "Thoughts on infrastructure, DevOps, Kubernetes, and security."
 <!-- Post Grid -->
 <div class="post-grid" id="postGrid">
   {% for post in paginator.posts %}
-  <article class="post-card" data-category="{{ post.category }}">
-    <div class="post-card-body">
-      <div class="post-card-meta">
-        <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %d, %Y" }}</time>
-        {% if post.read_time %}
-        <span class="post-card-readtime">{{ post.read_time }} min read</span>
-        {% endif %}
-      </div>
-      <h3 class="post-card-title">
-        <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
-      </h3>
-      {% if post.excerpt %}
-      <p class="post-card-excerpt">{{ post.excerpt | strip_html | truncate: 200 }}</p>
-      {% endif %}
-      <div class="post-card-tags">
-        {% for tag in post.tags limit:4 %}
-        <a href="{{ '/tags/' | relative_url }}{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
-        {% endfor %}
-      </div>
-    </div>
-  </article>
+  {% include post-card.html post=post %}
   {% endfor %}
 </div>
 

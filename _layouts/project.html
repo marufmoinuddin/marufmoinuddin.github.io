@@ -4,14 +4,7 @@ layout: default
 
 <article class="project-page">
   <div class="container">
-    <!-- Breadcrumbs -->
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
-      <a href="{{ '/' | relative_url }}">Home</a>
-      <span class="sep">/</span>
-      <a href="{{ '/projects/' | relative_url }}">Projects</a>
-      <span class="sep">/</span>
-      <span>{{ page.title }}</span>
-    </nav>
+    {% include breadcrumbs.html collection_label="Projects" collection_url="/projects/" %}
 
     <header class="project-header">
       <h1 class="project-title">{{ page.title }}</h1>
@@ -61,19 +54,6 @@ layout: default
       {% endif %}
     </div>
 
-    <nav class="article-pagination">
-      {% if page.previous %}
-      <a href="{{ page.previous.url | relative_url }}" class="pag-prev">
-        <span class="pag-direction">Previous</span>
-        <span class="pag-title">{{ page.previous.title }}</span>
-      </a>
-      {% endif %}
-      {% if page.next %}
-      <a href="{{ page.next.url | relative_url }}" class="pag-next">
-        <span class="pag-direction">Next</span>
-        <span class="pag-title">{{ page.next.title }}</span>
-      </a>
-      {% endif %}
-    </nav>
+    {% include article-pagination.html %}
   </div>
 </article>

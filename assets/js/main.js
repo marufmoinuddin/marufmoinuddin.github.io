@@ -12,8 +12,8 @@
     // Mobile nav toggle
     initMobileNav();
 
-    // Reading progress bar
-    initReadingProgress();
+    // Scroll handler (progress bar + TOC highlight)
+    initScrollHandler();
 
     // Search overlay
     initSearch();
@@ -85,22 +85,65 @@
     });
   }
 
-  // --- Reading Progress Bar ---
-  function initReadingProgress() {
+  // --- Scroll handler (RAF-throttled) ---
+  function initScrollHandler() {
     var bar = document.getElementById('readingProgress');
-    if (!bar) return;
+    var tocLinks = null;
+    var tocHeadings = null;
+    var ticking = false;
+
+    // Collect TOC elements if they exist
+    var tocBody = document.getElementById('tocBody');
+    if (tocBody) {
+      tocLinks = tocBody.querySelectorAll('a');
+      var content = document.getElementById('articleContent') || document.getElementById('docContent');
+      if (content) {
+        tocHeadings = content.querySelectorAll('h2, h3');
+      }
+    }
+
+    if (!bar && (!tocLinks || tocLinks.length === 0)) return;
 
     window.addEventListener('scroll', function() {
-      var scrollTop = window.scrollY;
-      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (docHeight <= 0) return;
-      var progress = (scrollTop / docHeight) * 100;
-      bar.style.width = progress + '%';
+      if (!ticking) {
+        requestAnimationFrame(function() {
+          var scrollTop = window.scrollY;
+
+          // Reading progress
+          if (bar) {
+            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            if (docHeight > 0) {
+              bar.style.width = (scrollTop / docHeight) * 100 + '%';
+            }
+          }
+
+          // TOC active highlight
+          if (tocLinks && tocHeadings && tocLinks.length > 0) {
+            var current = '';
+            tocHeadings.forEach(function(h) {
+              if (h.getBoundingClientRect().top <= 100) {
+                current = '#' + h.id;
+              }
+            });
+            tocLinks.forEach(function(link) {
+              link.classList.remove('active');
+              if (link.getAttribute('href') === current) {
+                link.classList.add('active');
+              }
+            });
+          }
+
+          ticking = false;
+        });
+        ticking = true;
+      }
     });
   }
 
   // --- Search ---
   var searchIndex = [];
+  var fuse = null;
+  var searchLoaded = false;
 
   function initSearch() {
     var searchBtn = document.getElementById('navSearchBtn');
@@ -111,21 +154,31 @@
 
     if (!searchBtn || !overlay || !input || !closeBtn || !results) return;
 
-    // Load search index
-    fetch('/assets/js/search-index.json')
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        searchIndex = data;
-      })
-      .catch(function() {
-        // Search index not available yet
-      });
+    // Load search index (lazy — only when search is first opened)
+    function loadSearchIndex() {
+      if (searchLoaded) return;
+      searchLoaded = true;
+      fetch('/assets/js/search-index.json')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          searchIndex = data;
+          fuse = new Fuse(data, {
+            keys: ['title', 'excerpt', 'tags'],
+            threshold: 0.4,
+            distance: 100
+          });
+        })
+        .catch(function() {
+          // Search index not available
+        });
+    }
 
     // Open search
     searchBtn.addEventListener('click', function() {
+      loadSearchIndex();
       overlay.classList.add('active');
       input.value = '';
-      results.innerHTML = '';
+      results.innerHTML = '<div class="search-empty">Start typing to search...</div>';
       setTimeout(function() { input.focus(); }, 100);
     });
 
@@ -164,13 +217,17 @@
       return;
     }
 
-    // Simple fuzzy search
-    var q = query.toLowerCase();
-    var matched = searchIndex.filter(function(item) {
-      return item.title.toLowerCase().includes(q) ||
-             (item.excerpt && item.excerpt.toLowerCase().includes(q)) ||
-             (item.tags && item.tags.some(function(t) { return t.toLowerCase().includes(q); }));
-    }).slice(0, 20);
+    var matched;
+    if (fuse) {
+      matched = fuse.search(query).map(function(r) { return r.item; }).slice(0, 20);
+    } else {
+      var q = query.toLowerCase();
+      matched = searchIndex.filter(function(item) {
+        return item.title.toLowerCase().includes(q) ||
+               (item.excerpt && item.excerpt.toLowerCase().includes(q)) ||
+               (item.tags && item.tags.some(function(t) { return t.toLowerCase().includes(q); }));
+      }).slice(0, 20);
+    }
 
     if (matched.length === 0) {
       resultsEl.innerHTML = '<div class="search-empty">No results found.</div>';
@@ -231,26 +288,6 @@
     });
     html += '</ul>';
     tocBody.innerHTML = html;
-
-    // Active TOC highlighting on scroll
-    var links = tocBody.querySelectorAll('a');
-    if (links.length === 0) return;
-
-    window.addEventListener('scroll', function() {
-      var current = '';
-      headings.forEach(function(h) {
-        var rect = h.getBoundingClientRect();
-        if (rect.top <= 100) {
-          current = '#' + h.id;
-        }
-      });
-      links.forEach(function(link) {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === current) {
-          link.classList.add('active');
-        }
-      });
-    });
   }
 
   // --- Doc Sidebar Toggle (mobile) ---

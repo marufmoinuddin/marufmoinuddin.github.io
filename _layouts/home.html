@@ -36,7 +36,7 @@ layout: default
           {% if post.excerpt %}<p>{{ post.excerpt | strip_html | truncate: 180 }}</p>{% endif %}
           <div class="featured-card-tags">
             {% for tag in post.tags limit:3 %}
-            <a href="{{ '/tags/' | relative_url }}{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
+            <a href="{{ '/tags/' | relative_url }}#{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
             {% endfor %}
           </div>
         </div>
@@ -81,6 +81,16 @@ layout: default
         <i class="fa-solid fa-network-wired"></i>
         <h3>Networking / OpenWrt</h3>
         <p>Network engineering, routing, embedded Linux</p>
+      </a>
+      <a href="{{ '/docs/linux/' | relative_url }}" class="category-tile">
+        <i class="fa-brands fa-linux"></i>
+        <h3>Linux Administration</h3>
+        <p>System administration, kernel updates, and automation</p>
+      </a>
+      <a href="{{ '/docs/virtualization/' | relative_url }}" class="category-tile">
+        <i class="fa-solid fa-cloud"></i>
+        <h3>Virtualization &amp; Proxmox</h3>
+        <p>VM templating, QEMU/KVM, and disk management</p>
       </a>
     </div>
   </div>

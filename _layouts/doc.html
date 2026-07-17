@@ -4,18 +4,7 @@ layout: default
 
 <article class="doc-page">
   <div class="container doc-container">
-    <!-- Breadcrumbs -->
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
-      <a href="{{ '/' | relative_url }}">Home</a>
-      <span class="sep">/</span>
-      <a href="{{ '/docs/' | relative_url }}">Documentation</a>
-      <span class="sep">/</span>
-      {% if page.category %}
-      <a href="{{ '/docs/' | relative_url }}{{ page.category | slugify }}/">{{ page.category | capitalize }}</a>
-      <span class="sep">/</span>
-      {% endif %}
-      <span>{{ page.title }}</span>
-    </nav>
+    {% include breadcrumbs.html collection_label="Documentation" collection_url="/docs/" category_label=page.category category_slug=page.category %}
 
     <div class="doc-layout">
       <!-- Left Sidebar -->
@@ -39,15 +28,7 @@ layout: default
           </a>
         </div>
 
-        <!-- Tags -->
-        {% if page.tags.size > 0 %}
-        <div class="doc-tags">
-          <strong>Tags:</strong>
-          {% for tag in page.tags %}
-          <a href="{{ '/tags/' | relative_url }}{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
-          {% endfor %}
-        </div>
-        {% endif %}
+        {% include article-tags.html %}
       </div>
 
       <!-- Right TOC -->

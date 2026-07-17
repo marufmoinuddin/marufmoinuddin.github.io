@@ -1,0 +1,13 @@
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <a href="{{ '/' | relative_url }}">Home</a>
+  <span class="sep">/</span>
+  {% if include.collection_label and include.collection_url %}
+  <a href="{{ include.collection_url | relative_url }}">{{ include.collection_label }}</a>
+  <span class="sep">/</span>
+  {% endif %}
+  {% if include.category_label and include.category_slug %}
+  <a href="{{ include.collection_url | relative_url }}{{ include.category_slug }}/">{{ include.category_label }}</a>
+  <span class="sep">/</span>
+  {% endif %}
+  <span>{{ page.title }}</span>
+</nav>

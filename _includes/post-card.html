@@ -1,4 +1,4 @@
-<article class="post-card">
+<article class="post-card"{% if include.post.category %} data-category="{{ include.post.category }}"{% endif %}>
   <div class="post-card-body">
     <div class="post-card-meta">
       <time datetime="{{ include.post.date | date_to_xmlschema }}">
@@ -19,7 +19,7 @@
     {% endif %}
     <div class="post-card-tags">
       {% for tag in include.post.tags limit:4 %}
-      <a href="{{ '/tags/' | relative_url }}{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
+      <a href="{{ '/tags/' | relative_url }}#{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
       {% endfor %}
     </div>
   </div>
