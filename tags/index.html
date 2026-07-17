@@ -1,0 +1,38 @@
+---
+layout: page
+title: Tags
+description: "Browse content by tag."
+---
+
+<div class="tags-page">
+  {% assign all_tags = site.posts | map: "tags" | concat: site.docs | map: "tags" | concat: site.research | map: "tags" | compact | uniq | sort %}
+  
+  <div class="tag-cloud">
+    {% for tag in all_tags %}
+    {% assign slug = tag | slugify %}
+    <a href="{{ '/tags/' | relative_url }}{{ slug }}" class="tag-cloud-item">{{ tag }}</a>
+    {% endfor %}
+  </div>
+
+  <hr>
+
+  {% for tag in all_tags %}
+  {% assign slug = tag | slugify %}
+  <section class="tag-section">
+    <h2 id="{{ slug }}">{{ tag }}</h2>
+    <ul class="tag-post-list">
+      {% assign tagged = site.posts | where_exp: "p", "p.tags contains tag" | concat: site.docs | where_exp: "p", "p.tags contains tag" | concat: site.research | where_exp: "p", "p.tags contains tag" | sort: "date" | reverse %}
+      {% for item in tagged %}
+      <li>
+        <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+        <span class="tag-post-meta">
+          {% if item.collection == "posts" %}Blog{% elsif item.collection == "docs" %}Docs{% elsif item.collection == "research" %}Research{% endif %}
+          &middot;
+          <time datetime="{{ item.date | date_to_xmlschema }}">{{ item.date | date: "%B %d, %Y" }}</time>
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>

@@ -1,0 +1,16 @@
+{% if page.tags.size > 0 %}
+<section class="related-posts">
+  <h3 class="related-posts-title">Related Posts</h3>
+  <div class="related-posts-grid">
+    {% assign related = site.posts | where_exp: "post", "post.tags contains page.tags.first or post.categories contains page.categories.first" %}
+    {% assign maxRelated = 3 %}
+    {% assign count = 0 %}
+    {% for post in related limit: 6 %}
+      {% if post.url != page.url and count < maxRelated %}
+        {% include post-card.html post=post %}
+        {% assign count = count | plus: 1 %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

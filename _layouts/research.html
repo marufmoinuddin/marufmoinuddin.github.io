@@ -1,0 +1,75 @@
+---
+layout: default
+---
+
+<article class="article-page research-page">
+  <div class="container article-container">
+    <!-- Breadcrumbs -->
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="{{ '/' | relative_url }}">Home</a>
+      <span class="sep">/</span>
+      <a href="{{ '/research/' | relative_url }}">Research</a>
+      <span class="sep">/</span>
+      <span>{{ page.title }}</span>
+    </nav>
+
+    <!-- Article Header -->
+    <header class="article-header">
+      <h1 class="article-title">{{ page.title }}</h1>
+      <div class="article-meta">
+        <time datetime="{{ page.date | date_to_xmlschema }}">
+          {{ page.date | date: "%B %d, %Y" }}
+        </time>
+        {% if page.read_time %}
+        <span class="meta-sep">&middot;</span>
+        <span>{{ page.read_time }} min read</span>
+        {% endif %}
+        {% if page.subarea %}
+        <span class="meta-sep">&middot;</span>
+        <span class="category-badge">{{ page.subarea }}</span>
+        {% endif %}
+      </div>
+      <!-- Disclosure/Status Block -->
+      {% if page.status %}
+      <div class="research-status-block">
+        <span class="badge badge-{{ page.status | downcase }}">{{ page.status }}</span>
+        {% if page.disclosure %}
+        <p class="research-disclosure">{{ page.disclosure }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </header>
+
+    <div class="article-layout">
+      {% include toc.html %}
+
+      <div class="article-content" id="articleContent">
+        {{ content }}
+
+        {% if page.tags.size > 0 %}
+        <div class="article-tags">
+          <strong>Tags:</strong>
+          {% for tag in page.tags %}
+          <a href="{{ '/tags/' | relative_url }}{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <nav class="article-pagination">
+          {% if page.previous %}
+          <a href="{{ page.previous.url | relative_url }}" class="pag-prev">
+            <span class="pag-direction">Previous</span>
+            <span class="pag-title">{{ page.previous.title }}</span>
+          </a>
+          {% endif %}
+          {% if page.next %}
+          <a href="{{ page.next.url | relative_url }}" class="pag-next">
+            <span class="pag-direction">Next</span>
+            <span class="pag-title">{{ page.next.title }}</span>
+          </a>
+          {% endif %}
+        </nav>
+      </div>
+    </div>
+  </div>
+</article>

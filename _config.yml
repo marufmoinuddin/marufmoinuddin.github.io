@@ -1,0 +1,126 @@
+# ============================================================
+# Site Settings
+# ============================================================
+title: Moin Uddin Ahmed
+SEOTitle: Moin Uddin Ahmed — Operations Engineer · DevOps · Security Research
+description: "Field notes on Kubernetes, PostgreSQL, observability, Android security research, and infrastructure troubleshooting."
+keyword: "Moin Uddin Ahmed, DevOps, Kubernetes, PostgreSQL, Platform Reliability, Operations Engineer, Portonics, BRAC University, Bangladesh, ELK Stack, Android Security"
+url: "https://marufmoinuddin.github.io"
+baseurl: ""
+header-img: /img/lapnote.jpg
+
+# ============================================================
+# Author / Social
+# ============================================================
+author: Moin Uddin Ahmed
+email: marufmoinuddin@example.com
+github_username: marufmoinuddin
+linkedin_username: marufmoinuddin
+twitter_username: marufmoinuddin
+rss: true
+
+# ============================================================
+# Build Settings
+# ============================================================
+highlighter: rouge
+permalink: /blog/:year/:month/:title/
+paginate: 10
+paginate_path: "/blog/page:num/"
+future: true
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+# ============================================================
+# Plugins (all GitHub Pages whitelisted)
+# ============================================================
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-paginate
+
+# ============================================================
+# Markdown / kramdown
+# ============================================================
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+      start_line: 1
+
+# ============================================================
+# Collections
+# ============================================================
+collections:
+  docs:
+    output: true
+    permalink: /docs/:path/
+  research:
+    output: true
+    permalink: /research/:path/
+  projects:
+    output: true
+    permalink: /projects/:path/
+
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      author: "Moin Uddin Ahmed"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "doc"
+  - scope:
+      path: ""
+      type: "research"
+    values:
+      layout: "research"
+  - scope:
+      path: ""
+      type: "projects"
+    values:
+      layout: "project"
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+
+# ============================================================
+# Tagging
+# ============================================================
+tag_page_layout: tag
+tag_page_dir: tags
+
+# ============================================================
+# SEO
+# ============================================================
+logo: /img/headshot1-square4.jpg
+social:
+  name: Moin Uddin Ahmed
+  links:
+    - https://github.com/marufmoinuddin
+    - https://linkedin.com/in/marufmoinuddin
+    - https://twitter.com/marufmoinuddin
+
+webmaster_verifications:
+  google:
+  bing:
+
+# ============================================================
+# Analytics
+# ============================================================
+# ga_track_id:
+# ga_domain:

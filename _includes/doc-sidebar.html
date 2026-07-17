@@ -1,0 +1,26 @@
+<aside class="doc-sidebar" id="docSidebar">
+  <div class="doc-sidebar-header">
+    <h5>Documentation</h5>
+    <button class="doc-sidebar-toggle" id="docSidebarToggle" aria-label="Toggle sidebar">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+  <nav class="doc-sidebar-nav">
+    {% assign categories = site.docs | group_by: "category" | sort: "name" %}
+    {% for cat in categories %}
+    <div class="doc-sidebar-section">
+      <h6 class="doc-sidebar-category">{{ cat.name | capitalize }}</h6>
+      <ul class="doc-sidebar-pages">
+        {% assign pages = cat.items | sort: "order" %}
+        {% for doc in pages %}
+        <li>
+          <a href="{{ doc.url | relative_url }}" {% if doc.url == page.url %}class="active"{% endif %}>
+            {{ doc.title }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </nav>
+</aside>

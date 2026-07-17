@@ -1,0 +1,40 @@
+---
+layout: page
+---
+
+<div class="tag-page">
+  <p class="page-lede">All content tagged with <strong>{{ page.tag }}</strong>.</p>
+
+  {% assign all_tagged = site.posts | where_exp: "p", "p.tags contains page.tag" | concat: site.docs | where_exp: "p", "p.tags contains page.tag" | concat: site.research | where_exp: "p", "p.tags contains page.tag" | sort: "date" | reverse %}
+
+  {% if all_tagged.size > 0 %}
+  <div class="post-grid">
+    {% for item in all_tagged %}
+    <article class="post-card">
+      <div class="post-card-body">
+        <div class="post-card-meta">
+          {% if item.collection == "posts" %}
+          <span class="badge badge-blog">Blog</span>
+          {% elsif item.collection == "docs" %}
+          <span class="badge badge-blog">Docs</span>
+          {% elsif item.collection == "research" %}
+          <span class="badge badge-research">Research</span>
+          {% endif %}
+          <time datetime="{{ item.date | date_to_xmlschema }}">{{ item.date | date: "%B %d, %Y" }}</time>
+        </div>
+        <h3 class="post-card-title">
+          <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+        </h3>
+        {% if item.excerpt %}
+        <p class="post-card-excerpt">{{ item.excerpt | strip_html | truncate: 200 }}</p>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>No content found with this tag.</p>
+  </div>
+  {% endif %}
+</div>

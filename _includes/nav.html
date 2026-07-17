@@ -1,0 +1,37 @@
+<!-- Navigation -->
+<nav class="navbar" id="navbar" role="navigation">
+  <div class="nav-container">
+    <a href="{{ '/' | relative_url }}" class="nav-brand">
+      <span class="nav-logo-text">Moin Uddin Ahmed</span>
+    </a>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="nav-links" id="navLinks">
+      <a href="{{ '/blog/' | relative_url }}" {% if page.url contains '/blog/' %}class="active"{% endif %}>Blog</a>
+      <a href="{{ '/docs/' | relative_url }}" {% if page.url contains '/docs/' %}class="active"{% endif %}>Docs</a>
+      <a href="{{ '/research/' | relative_url }}" {% if page.url contains '/research/' %}class="active"{% endif %}>Research</a>
+      <a href="{{ '/projects/' | relative_url }}" {% if page.url contains '/projects/' %}class="active"{% endif %}>Projects</a>
+      <a href="{{ '/about/' | relative_url }}" {% if page.url contains '/about/' %}class="active"{% endif %}>About</a>
+
+      <div class="nav-actions">
+        <button class="nav-search-btn" id="navSearchBtn" aria-label="Search">
+          <i class="fa-solid fa-search"></i>
+        </button>
+        <button class="nav-theme-btn" id="navThemeBtn" aria-label="Toggle theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <a href="{{ '/feed.xml' | relative_url }}" class="nav-rss" aria-label="RSS Feed">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Reading Progress Bar -->
+<div class="reading-progress" id="readingProgress"></div>

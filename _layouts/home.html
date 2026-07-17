@@ -1,0 +1,144 @@
+---
+layout: default
+---
+
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-bg"></div>
+  <div class="container hero-content">
+    <div class="hero-text">
+      <h1 class="hero-name">{{ site.author }}</h1>
+      <p class="hero-tagline">Operations Engineer · DevOps · Security Research</p>
+      <p class="hero-subcopy">Field notes on Kubernetes, PostgreSQL, observability, Android security research, and infrastructure troubleshooting.</p>
+      <div class="hero-ctas">
+        <a href="{{ '/blog/' | relative_url }}" class="btn btn-primary">Read the Blog &rarr;</a>
+        <a href="{{ '/docs/' | relative_url }}" class="btn btn-outline">Browse Docs &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Posts -->
+{% assign featured = site.posts | where: "featured", true %}
+{% if featured.size > 0 %}
+<section class="section featured-section">
+  <div class="container">
+    <h2 class="section-title">Featured Posts</h2>
+    <div class="featured-grid">
+      {% for post in featured limit:3 %}
+      <article class="featured-card">
+        <div class="featured-card-body">
+          <div class="featured-card-meta">
+            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %d, %Y" }}</time>
+            {% if post.read_time %}<span>{{ post.read_time }} min read</span>{% endif %}
+          </div>
+          <h3><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+          {% if post.excerpt %}<p>{{ post.excerpt | strip_html | truncate: 180 }}</p>{% endif %}
+          <div class="featured-card-tags">
+            {% for tag in post.tags limit:3 %}
+            <a href="{{ '/tags/' | relative_url }}{{ tag | slugify }}" class="tag-badge">{{ tag }}</a>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Documentation Categories -->
+<section class="section docs-categories-section">
+  <div class="container">
+    <h2 class="section-title">Documentation Categories</h2>
+    <div class="category-grid">
+      <a href="{{ '/docs/kubernetes/' | relative_url }}" class="category-tile">
+        <i class="fa-brands fa-kubernetes"></i>
+        <h3>Kubernetes Runbooks</h3>
+        <p>Cluster operations, troubleshooting, and best practices</p>
+      </a>
+      <a href="{{ '/docs/postgresql/' | relative_url }}" class="category-tile">
+        <i class="fa-solid fa-database"></i>
+        <h3>PostgreSQL Operations</h3>
+        <p>HA clusters, replication, performance tuning</p>
+      </a>
+      <a href="{{ '/docs/observability/' | relative_url }}" class="category-tile">
+        <i class="fa-solid fa-chart-line"></i>
+        <h3>Monitoring &amp; ELK</h3>
+        <p>Observability stack, logging, metrics, alerting</p>
+      </a>
+      <a href="{{ '/docs/cicd/' | relative_url }}" class="category-tile">
+        <i class="fa-solid fa-gears"></i>
+        <h3>CI/CD &amp; Automation</h3>
+        <p>Pipeline design, GitOps, infrastructure as code</p>
+      </a>
+      <a href="{{ '/docs/android-security/' | relative_url }}" class="category-tile">
+        <i class="fa-solid fa-shield-halved"></i>
+        <h3>Android Security Lab</h3>
+        <p>Mobile instrumentation, reverse engineering, SELinux</p>
+      </a>
+      <a href="{{ '/docs/networking/' | relative_url }}" class="category-tile">
+        <i class="fa-solid fa-network-wired"></i>
+        <h3>Networking / OpenWrt</h3>
+        <p>Network engineering, routing, embedded Linux</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Latest Writing Feed -->
+<section class="section latest-section">
+  <div class="container">
+    <h2 class="section-title">Latest Writing</h2>
+    <div class="latest-feed">
+      {% assign all_writing = site.posts | concat: site.research | sort: "date" | reverse %}
+      {% for item in all_writing limit:5 %}
+      <article class="latest-item">
+        <div class="latest-item-meta">
+          <time datetime="{{ item.date | date_to_xmlschema }}">{{ item.date | date: "%b %d, %Y" }}</time>
+          {% if item.collection == "research" %}
+          <span class="badge badge-research">Research</span>
+          {% else %}
+          <span class="badge badge-blog">Blog</span>
+          {% endif %}
+        </div>
+        <h3><a href="{{ item.url | relative_url }}">{{ item.title }}</a></h3>
+        {% if item.excerpt %}<p>{{ item.excerpt | strip_html | truncate: 150 }}</p>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Research Highlights -->
+{% assign highlights = site.research | sort: "date" | reverse %}
+{% if highlights.size > 0 %}
+<section class="section research-highlights-section">
+  <div class="container">
+    <h2 class="section-title">Research Highlights</h2>
+    <div class="highlights-grid">
+      {% for item in highlights limit:3 %}
+      <article class="highlight-card">
+        <span class="badge badge-research">Research</span>
+        <h3><a href="{{ item.url | relative_url }}">{{ item.title }}</a></h3>
+        <p>{{ item.excerpt | strip_html | truncate: 120 }}</p>
+        <time datetime="{{ item.date | date_to_xmlschema }}">{{ item.date | date: "%B %d, %Y" }}</time>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Compact About Block -->
+<section class="section about-compact-section">
+  <div class="container">
+    <div class="about-compact">
+      <img src="{{ '/img/headshot1-square4.jpg' | relative_url }}" alt="{{ site.author }}" class="about-compact-photo" loading="lazy">
+      <div class="about-compact-text">
+        <p>{{ site.description }}</p>
+        <a href="{{ '/about/' | relative_url }}" class="btn btn-text">Learn more about me &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
