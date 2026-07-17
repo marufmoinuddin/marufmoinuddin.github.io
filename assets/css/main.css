@@ -1172,17 +1172,17 @@ a.contact-card:hover {
 
 .article-content pre {
   background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 1rem 1.15rem;
-  margin: 1.5rem 0;
+  border: 0;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  padding: 0.9rem 1rem;
+  margin: 0;
   overflow-x: auto;
   position: relative;
 }
 
 .article-content code {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.92rem;
   line-height: 1.6;
 }
 
@@ -1195,28 +1195,114 @@ a.contact-card:hover {
   border: 1px solid var(--border);
 }
 
+/* GitHub-like code wrapper and header */
+.code-wrapper {
+  margin: 1.5rem 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  background: color-mix(in srgb, var(--bg-soft) 78%, transparent);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-faint);
+}
+
+.code-header .code-lang {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.code-wrapper pre {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--bg-soft);
+}
+
+.code-block {
+  display: block;
+}
+
+/* Each row contains a gutter cell and a code cell; grid ensures matching heights */
+.code-row {
+  display: grid;
+  grid-template-columns: 3.1rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0 0.6rem;
+}
+
+.line-num {
+  /* match code font/size/line-height exactly to align */
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text-faint);
+  text-align: right;
+  user-select: none;
+  padding: 0.25rem 0.5rem 0.25rem 0;
+}
+
+.code-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  padding: 0.25rem 0 0.25rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
 .code-copy-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 0.72rem;
-  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+  padding: 0.28rem 0.6rem;
   border-radius: 6px;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--ease);
+  transition: color var(--ease), border-color var(--ease), transform var(--ease);
 }
 
-pre:hover .code-copy-btn {
-  opacity: 1;
+.code-header .code-copy-btn {
+  opacity: 0.98;
 }
 
 .code-copy-btn:hover {
   color: var(--accent);
   border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+/* Rouge table styling: gutter (line numbers) vs code column */
+.rouge-table { width: 100%; border-collapse: collapse; }
+/* hide line-number gutter produced by Rouge */
+.rouge-gutter { display: none; }
+.rouge-gutter pre { margin: 0; padding: 0; }
+.rouge-code { padding-left: 0; }
+
+/* Enable wrapping inside code blocks (preserve whitespace but wrap long lines) */
+.article-content pre,
+.code-wrapper pre,
+.rouge-code pre {
+  white-space: pre-wrap; /* CSS3 */
+  white-space: -moz-pre-wrap; /* Gecko */
+  white-space: -pre-wrap; /* Opera 4-6 */
+  white-space: -o-pre-wrap; /* Opera 7 */
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .callout {

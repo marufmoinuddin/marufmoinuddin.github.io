@@ -5,3 +5,6 @@ _site/
 vendor/
 Gemfile.lock
 .DS_Store
+
+# Staged doc→blog ETL output (may contain internal/sensitive notes)
+_import/

@@ -264,35 +264,133 @@
   }
 
   function initCodeCopy() {
-    document.querySelectorAll('.article-content pre > code').forEach(function (code) {
-      var pre = code.parentElement;
-      if (pre.classList.contains('lineno') || pre.querySelector('.code-copy-btn')) return;
+    document.querySelectorAll('.article-content pre').forEach(function (pre) {
+      var code = pre.querySelector('code');
+      if (!code) return;
+      if (pre.classList.contains('lineno')) return;
+
+      // avoid duplicate wrappers
+      if (pre.closest('.code-wrapper')) return;
+
+      // detect language from ancestor class like 'language-bash'
+      var lang = '';
+      var el = pre.parentElement;
+      while (el) {
+        if (el.className) {
+          var m = (el.className || '').match(/\blanguage-([a-zA-Z0-9_-]+)\b/);
+          if (m) { lang = m[1]; break; }
+        }
+        el = el.parentElement;
+      }
+
+      // create wrapper and header
+      var wrapper = document.createElement('div');
+      wrapper.className = 'code-wrapper';
+
+      var header = document.createElement('div');
+      header.className = 'code-header';
+
+      var langSpan = document.createElement('span');
+      langSpan.className = 'code-lang';
+      langSpan.textContent = lang || '';
+      header.appendChild(langSpan);
 
       var btn = document.createElement('button');
       btn.className = 'code-copy-btn';
       btn.type = 'button';
       btn.textContent = 'Copy';
-      pre.style.position = 'relative';
-      pre.appendChild(btn);
+      btn.setAttribute('aria-label', 'Copy code');
+      header.appendChild(btn);
+
+      // move pre into wrapper and insert header
+      pre.parentElement.insertBefore(wrapper, pre);
+      wrapper.appendChild(header);
+
+      // Transform existing code into two-column layout: gutter + code body
+      try {
+        var rougeCodeTd = code.querySelector('td.rouge-code');
+        var sourcePre = null;
+        if (rougeCodeTd) {
+          sourcePre = rougeCodeTd.querySelector('pre');
+        } else {
+          sourcePre = code.querySelector('pre') || code;
+        }
+
+        var rawHtml = sourcePre ? sourcePre.innerHTML : code.innerHTML;
+        var lines = rawHtml.split('\n');
+
+        // Build a row-per-line layout so numbers align with wrapped lines
+        var block = document.createElement('div');
+        block.className = 'code-block';
+
+        lines.forEach(function (ln, idx) {
+          var row = document.createElement('div');
+          row.className = 'code-row';
+
+          var lineNum = document.createElement('div');
+          lineNum.className = 'line-num';
+          // hide number for empty/whitespace-only lines
+          lineNum.textContent = (ln && ln.trim()) ? String(idx + 1) : '';
+
+          var lineDiv = document.createElement('div');
+          lineDiv.className = 'code-line';
+          lineDiv.innerHTML = ln || '';
+
+          row.appendChild(lineNum);
+          row.appendChild(lineDiv);
+          block.appendChild(row);
+        });
+
+        // Clear original pre content then insert our block
+        while (pre.firstChild) pre.removeChild(pre.firstChild);
+        pre.appendChild(block);
+      } catch (e) {
+        // if anything fails, fall back to original pre
+      }
+
+      wrapper.appendChild(pre);
 
       btn.addEventListener('click', function () {
-        var text = code.textContent;
+        var text = '';
+        // Prefer the rendered per-line `.code-line` content inside our wrapper (excludes gutter)
+        var linesNodes = wrapper.querySelectorAll('.code-row .code-line');
+        if (linesNodes && linesNodes.length) {
+          var parts = [];
+          linesNodes.forEach(function (ln) { parts.push(ln.innerText.replace(/\u00A0/g, ' ')); });
+          text = parts.join('\n');
+        } else {
+          var rougeCodeTd = code.querySelector('td.rouge-code');
+          if (rougeCodeTd) {
+            var innerPre = rougeCodeTd.querySelector('pre');
+            text = innerPre ? innerPre.textContent : rougeCodeTd.textContent;
+          } else {
+            var innerPre = code.querySelector('pre');
+            text = innerPre ? innerPre.textContent : code.textContent;
+          }
+        }
+
+        text = text.replace(/\r\n/g, '\n');
+
         var done = function () {
           btn.textContent = 'Copied!';
           setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
         };
 
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(text).then(done);
-        } else {
+        function fallbackCopy(str) {
           var ta = document.createElement('textarea');
-          ta.value = text;
+          ta.value = str;
           ta.style.position = 'fixed';
           ta.style.opacity = '0';
           document.body.appendChild(ta);
           ta.select();
-          document.execCommand('copy');
+          try { document.execCommand('copy'); } catch (e) {}
           document.body.removeChild(ta);
+        }
+
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+        } else {
+          fallbackCopy(text);
           done();
         }
       });
