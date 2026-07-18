@@ -130,7 +130,7 @@
     function loadSearchIndex() {
       if (searchLoaded) return;
       searchLoaded = true;
-      fetch('/assets/js/search-index.json')
+      fetch('/assets/js/search-index.json?v=' + Date.now())
         .then(function (res) { return res.json(); })
         .then(function (data) {
           searchIndex = data || [];

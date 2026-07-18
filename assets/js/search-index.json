@@ -1,1 +1,394 @@
-[]
+[
+  {
+    "title": "A Secure Kubernetes Multi-Master Cluster Setup Guide",
+    "url": "/blog/2026/07/a-secure-kubernetes-multi-master-cluster-setup-guide/",
+    "excerpt": "A comprehensive, secure, step-by-step manual guide for setting up a production-grade multi-master Kubernetes cluster. Covers architecture planning, OS prerequisites, cluster initialization with kubeadm, high availability with Keepalived and HAProxy, Cilium CNI, certificate management, and troubleshooting.",
+    "tags": [
+      "cilium",
+      "haproxy",
+      "high-availability",
+      "keepalived",
+      "kubeadm",
+      "kubernetes",
+      "linux"
+    ],
+    "category": "Kubernetes",
+    "date": "2026-07-18"
+  },
+  {
+    "title": "Setting Up Highly Available PostgreSQL Cluster with Patroni, etcd, HAProxy, and Keepalived",
+    "url": "/blog/2026/07/setting-up-highly-available-postgresql-cluster-with-patroni-etcd-haproxy-and-keepalived/",
+    "excerpt": "1. Overview 2. Architecture 3. Prerequisites 4. Initial Setup - Hostname Configuration - Package Installation",
+    "tags": [
+      "backup",
+      "etcd",
+      "haproxy",
+      "high-availability",
+      "patroni",
+      "pgbackrest",
+      "postgresql"
+    ],
+    "category": "PostgreSQL",
+    "date": "2026-07-17"
+  },
+  {
+    "title": "ETL Server Setup to transfer data from Production to a Example. Data Warehouse Guide: Apache Airflow & PipelineWise",
+    "url": "/blog/2025/07/etl-server-setup-to-transfer-data-from-production-to-a-example-data-warehouse-guide-apache-airflow-pipelinewise/",
+    "excerpt": "This guide provides clear, step-by-step instructions for setting up Apache Airflow and PipelineWise to manage and orchestrate ETL (Extract, Transform, Load) pipelines. It is designed to be beginner-friendly, ensuring\u2026",
+    "tags": [
+      "airflow",
+      "data-engineering",
+      "docker",
+      "linux",
+      "pipelinewise",
+      "postgresql",
+      "ubuntu"
+    ],
+    "category": "Data Engineering",
+    "date": "2025-07-29"
+  },
+  {
+    "title": "Crunchy PGO 5.6.7 Kubernetes 29 Cluster Basic Documentation",
+    "url": "/blog/2025/07/crunchy-pgo-5-6-7-kubernetes-29-cluster-basic-documentation/",
+    "excerpt": "This documentation provides step-by-step instructions for setting up a Kubernetes 29 cluster, installing necessary components such as Cilium, Rook Ceph storage, and Crunchy PGO, and deploying a PostgreSQL cluster.",
+    "tags": [
+      "ceph",
+      "cilium",
+      "kubernetes",
+      "linux",
+      "postgresql",
+      "rbd",
+      "rook"
+    ],
+    "category": "Kubernetes",
+    "date": "2025-07-08"
+  },
+  {
+    "title": "FAQ Document: Database and Backup Alerts Troubleshooting (Updated with PGO Crunchy FAQs)",
+    "url": "/blog/2025/07/faq-document-database-and-backup-alerts-troubleshooting-updated-with-pgo-crunchy-faqs/",
+    "excerpt": "This FAQ document provides guidance on resolving common database, replication, and backup alerts, including additional scenarios specific to the Crunchy Data PostgreSQL Operator (PGO). Follow the instructions carefully\u2026",
+    "tags": [
+      "backup",
+      "kubernetes",
+      "postgresql",
+      "rsync"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-07-08"
+  },
+  {
+    "title": "Logical Replication Tutorial",
+    "url": "/blog/2025/07/logical-replication-tutorial/",
+    "excerpt": "1. Introduction 2. Step 1: Export Schema from Old Master 3. Step 2: Copy Schema Backup to Local Machine 4. Step 3: Copy Schema Backup to New Master",
+    "tags": [
+      "backup",
+      "high-availability",
+      "logical-replication",
+      "patroni",
+      "postgresql"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-07-08"
+  },
+  {
+    "title": "PostgreSQL High-Availability Cluster Deployment Guide",
+    "url": "/blog/2025/07/postgresql-high-availability-cluster-deployment-guide/",
+    "excerpt": "This comprehensive guide provides end-to-end instructions for deploying a resilient PostgreSQL cluster using the Crunchy Data PostgreSQL Operator on Kubernetes. The solution integrates high availability, automated backups, performance optimization, and robust monitoring to ensure enterprise-grade database operations.",
+    "tags": [
+      "backup",
+      "ceph",
+      "high-availability",
+      "kubernetes",
+      "linux",
+      "pgbackrest",
+      "postgresql",
+      "prometheus"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-07-08"
+  },
+  {
+    "title": "Rook Ceph RBD PVC Troubleshooting Guide for Multi-Attach and MountDevice Failures",
+    "url": "/blog/2025/07/rook-ceph-rbd-pvc-troubleshooting-guide-for-multi-attach-and-mountdevice-failures/",
+    "excerpt": "This guide provides a detailed, step-by-step process to resolve stuck Rook Ceph RBD volumes in Kubernetes, particularly when pods encounter errors such as:",
+    "tags": [
+      "ceph",
+      "kubernetes",
+      "pvc",
+      "rbd",
+      "rook"
+    ],
+    "category": "Kubernetes",
+    "date": "2025-07-08"
+  },
+  {
+    "title": "Setting Up Oracle 19c Using Docker on Ubuntu 22.04",
+    "url": "/blog/2025/07/setting-up-oracle-19c-using-docker-on-ubuntu-22-04/",
+    "excerpt": "This documentation provides a detailed step-by-step guide to help you set up Oracle 19c using Docker on an Ubuntu 22.04 system.Whether you are a beginner or an experienced user, this document ensures you can set up and\u2026",
+    "tags": [
+      "debian",
+      "docker",
+      "linux",
+      "oracle",
+      "ubuntu"
+    ],
+    "category": "Linux",
+    "date": "2025-07-08"
+  },
+  {
+    "title": "Setting Up RSync in PGO Crunchy Database to Copy pgBackRest Backup Files to a New replica_ABC and install PostgreSQL, pgBackRest and Restore backups on that replica_ABC",
+    "url": "/blog/2025/07/setting-up-rsync-in-pgo-crunchy-database-to-copy-pgbackrest-backup-files-to-a-new-replica-abc-and-install-postgresql-pgbackrest-and-restore-backups-on-that-replica-abc/",
+    "excerpt": "This documentation provides detailed steps on how to set up RSync in Kubernetes (K8s) to copy pgBackRest backup files to a new replicaABC. It will aslo help you set up PostgreSQL (Percona-PostgreSQL-13) and pgBackRest\u2026",
+    "tags": [
+      "backup",
+      "kubernetes",
+      "pgbackrest",
+      "postgresql",
+      "rsync"
+    ],
+    "category": "Backup",
+    "date": "2025-07-08"
+  },
+  {
+    "title": "Setting Up Streaming Standby for PGO Crunchy PostgreSQL Cluster",
+    "url": "/blog/2025/07/setting-up-streaming-standby-for-pgo-crunchy-postgresql-cluster/",
+    "excerpt": "- Introduction - Prerequisites - Step 1: Prepare TLS Certificates - Step 2: Create Kubernetes Secrets - Step 3: Configure Primary Cluster",
+    "tags": [
+      "kubernetes",
+      "postgresql",
+      "streaming-replication"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-07-08"
+  },
+  {
+    "title": "Install Latest Kernel in Ubuntu and Auto-Load rbd module forr rook ceph K8s",
+    "url": "/blog/2025/06/install-latest-kernel-in-ubuntu-and-auto-load-rbd-module-forr-rook-ceph-k8s/",
+    "excerpt": "This guide provides a robust script to install the latest Ubuntu kernel (6.14.x or higher) with linux-modules-extra from http://archive.ubuntu.com/ubuntu/pool/main/l/linux/ and ensures the Ceph RBD module (rbd.ko)\u2026",
+    "tags": [
+      "ceph",
+      "kernel",
+      "linux",
+      "rbd",
+      "ubuntu"
+    ],
+    "category": "Linux",
+    "date": "2025-06-29"
+  },
+  {
+    "title": "Resolving Istio CNI and Cilium Conflict in Kubernetes",
+    "url": "/blog/2025/05/resolving-istio-cni-and-cilium-conflict-in-kubernetes/",
+    "excerpt": "This document provides a step-by-step guide to resolve a reconciliation loop issue in the Istio CNI plugin when used alongside Cilium as the primary Container Network Interface (CNI) plugin in a Kubernetes cluster. The\u2026",
+    "tags": [
+      "cilium",
+      "envoy",
+      "istio",
+      "kubernetes"
+    ],
+    "category": "Kubernetes",
+    "date": "2025-05-20"
+  },
+  {
+    "title": "Fix Pod Forbidden Errors in PGO crunchy Prometheus",
+    "url": "/blog/2025/03/fix-pod-forbidden-errors-in-pgo-crunchy-prometheus/",
+    "excerpt": "You're seeing \\\"forbidden\\\" errors in the Prometheus pod logs, specifically for listing and watching pods. The service account used by Prometheus doesn't have the necessary permissions to access cluster-wide resources.",
+    "tags": [
+      "kubernetes",
+      "postgresql",
+      "prometheus"
+    ],
+    "category": "Kubernetes",
+    "date": "2025-03-06"
+  },
+  {
+    "title": "Guide to Install Microsoft Office 2010 (32-bit) on Ubuntu 22.04 using Winetricks",
+    "url": "/blog/2025/03/guide-to-install-microsoft-office-2010-32-bit-on-ubuntu-22-04-using-winetricks/",
+    "excerpt": "Here's a comprehensive guide to install Microsoft Office 2010 32-bit on Ubuntu 22.04 using Winetricks:",
+    "tags": [
+      "linux",
+      "ubuntu"
+    ],
+    "category": "Linux",
+    "date": "2025-03-02"
+  },
+  {
+    "title": "Creating a Debian 12 Cloud-Init Template in Proxmox",
+    "url": "/blog/2025/02/creating-a-debian-12-cloud-init-template-in-proxmox/",
+    "excerpt": "This guide will walk you through creating a Debian 12 (Bookworm) cloud-init template in Proxmox using BIOS boot (seabios) and Q35 machine type. We\u2019ll start from downloading the image and end with a reusable template\u2026",
+    "tags": [
+      "cloud-init",
+      "debian",
+      "kernel",
+      "linux",
+      "lvm",
+      "proxmox",
+      "qcow2",
+      "qemu"
+    ],
+    "category": "Virtualization",
+    "date": "2025-02-11"
+  },
+  {
+    "title": "Configuration Documentation for Potential Configuration Changes for Faster Availability",
+    "url": "/blog/2025/02/configuration-documentation-for-potential-configuration-changes-for-faster-availability/",
+    "excerpt": "This document explains two specific configuration changes made to the Patroni Configuration and the PodDisruptionBudget (PDB) in the Kubernetes and PGO Crunchy setup. These settings are crucial for the database's high\u2026",
+    "tags": [
+      "high-availability",
+      "kubernetes",
+      "patroni",
+      "postgresql"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-02-10"
+  },
+  {
+    "title": "Creating an Ubuntu 24.04 Cloud-Init Template in Proxmox",
+    "url": "/blog/2025/02/creating-an-ubuntu-24-04-cloud-init-template-in-proxmox/",
+    "excerpt": "This guide will walk you through creating an Ubuntu 24.04 cloud-init template in Proxmox. We'll start from downloading the image and end with a reusable template that you can use to create new virtual machines quickly.",
+    "tags": [
+      "cloud-init",
+      "kernel",
+      "linux",
+      "proxmox",
+      "qemu",
+      "ubuntu",
+      "virtualization"
+    ],
+    "category": "Virtualization",
+    "date": "2025-02-10"
+  },
+  {
+    "title": "Explanation Document: Pod Anti-Affinity Configuration for PostgreSQL Cluster",
+    "url": "/blog/2025/01/explanation-document-pod-anti-affinity-configuration-for-postgresql-cluster/",
+    "excerpt": "This document explains the pod anti-affinity configuration used in the PostgresCluster resource to ensure that the master and replica pods are scheduled on different nodes. It also delves into why role-based\u2026",
+    "tags": [
+      "kubernetes",
+      "postgresql"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-01-28"
+  },
+  {
+    "title": "Accessing LVM Storage Across Different Machines",
+    "url": "/blog/2025/01/accessing-lvm-storage-across-different-machines/",
+    "excerpt": "This research explores the practical and theoretical aspects of accessing Logical Volume Manager (LVM) storage across different machines by connecting physical volumes (PVs) from an existing LVM setup to a new system.\u2026",
+    "tags": [
+      "backup",
+      "linux",
+      "lvm",
+      "pvc"
+    ],
+    "category": "Backup",
+    "date": "2025-01-02"
+  },
+  {
+    "title": "Backup Schedule Template in PGO Crunchy PostgreSQL Operator \u2014 Detailed Guide",
+    "url": "/blog/2025/01/backup-schedule-template-in-pgo-crunchy-postgresql-operator-detailed-guide/",
+    "excerpt": "Detailed guide explaining the rationale behind each step of managing and scheduling pgBackRest backups for a PostgreSQL PGO Crunchy cluster. Replace placeholders as needed.",
+    "tags": [
+      "backup",
+      "pgbackrest",
+      "postgresql"
+    ],
+    "category": "Database",
+    "date": "2025-01-02"
+  },
+  {
+    "title": "Documentation: Managing the autoCreateUserSchema Annotation for PostgreSQL Clusters",
+    "url": "/blog/2025/01/documentation-managing-the-autocreateuserschema-annotation-for-postgresql-clusters/",
+    "excerpt": "The autoCreateUserSchema annotation for PostgreSQL clusters managed by the CrunchyData PostgreSQL Operator is a feature that automatically creates user schemas when a new database user is created. If this annotation is\u2026",
+    "tags": [
+      "postgresql"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-01-02"
+  },
+  {
+    "title": "Readiness Probe Failure in Kubernetes Deployment",
+    "url": "/blog/2025/01/readiness-probe-failure-in-kubernetes-deployment/",
+    "excerpt": "In a Kubernetes environment, a PostgreSQL deployment was experiencing issues with its readiness probe, leading to frequent failures. The readiness probe is a critical mechanism that helps Kubernetes determine whether a\u2026",
+    "tags": [
+      "kubernetes",
+      "postgresql"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-01-02"
+  },
+  {
+    "title": "Simple Guide to Resize and Expand a QCOW2 Disk Image for CentOS Stream 9",
+    "url": "/blog/2025/01/simple-guide-to-resize-and-expand-a-qcow2-disk-image-for-centos-stream-9/",
+    "excerpt": "This guide will walk you through the steps to resize a QCOW2 disk image on CentOS Stream 9. By following these instructions, you'll be able to create a new, larger disk image and expand the partition inside it to take\u2026",
+    "tags": [
+      "qcow2",
+      "qemu",
+      "virtualization"
+    ],
+    "category": "Virtualization",
+    "date": "2025-01-02"
+  },
+  {
+    "title": "Switchover Guide for Crunchy PGO's PostgreSQL Streaming Standby Replication (Master \u2194 Standby)",
+    "url": "/blog/2025/01/switchover-guide-for-crunchy-pgo-s-postgresql-streaming-standby-replication-master-standby/",
+    "excerpt": "This guide explains how to perform a switchover between a PostgreSQL Master Cluster (primary) and Standby Cluster (replica). The switchover involves making the current Standby the new Master and the current Master the\u2026",
+    "tags": [
+      "high-availability",
+      "kubernetes",
+      "patroni",
+      "postgresql",
+      "streaming-replication"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-01-02"
+  },
+  {
+    "title": "Understanding and Mitigating Replica Lag in Patroni Clusters",
+    "url": "/blog/2025/01/understanding-and-mitigating-replica-lag-in-patroni-clusters/",
+    "excerpt": "In a Patroni-managed PostgreSQL cluster, the transaction log (TL) can differ between replicas, leading to replication lag. This document explains the reasons behind varying TL values, what causes lag to increase, and\u2026",
+    "tags": [
+      "patroni",
+      "postgresql"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-01-02"
+  },
+  {
+    "title": "Using S3 for Backups in Postgres Operator",
+    "url": "/blog/2025/01/using-s3-for-backups-in-postgres-operator/",
+    "excerpt": "To set up backups in S3 for your PostgreSQL cluster, you need to make a few modifications to your custom resource (CR) spec. Additionally, you will need to either:",
+    "tags": [
+      "backup",
+      "kubernetes",
+      "pgbackrest",
+      "postgresql",
+      "s3"
+    ],
+    "category": "PostgreSQL",
+    "date": "2025-01-02"
+  },
+  {
+    "title": "pgBackRest setup",
+    "url": "/blog/2024/12/pgbackrest-setup/",
+    "excerpt": "pgBackRest is a backup tool used to perform PostgreSQL database backup, archiving, restoration, and point-in-time recovery. While it can be used for local backups, this procedure shows how to deploy a pgBackRest server\u2026",
+    "tags": [
+      "backup",
+      "pgbackrest",
+      "postgresql",
+      "s3",
+      "ubuntu"
+    ],
+    "category": "PostgreSQL",
+    "date": "2024-12-02"
+  },
+  {
+    "title": "Setting Up PostgreSQL and pgBackRest as a Readonly database in a replica where archived databases are actively restored and made live on different ports",
+    "url": "/blog/2024/12/setting-up-postgresql-and-pgbackrest-as-a-readonly-database-in-a-replica-where-archived-databases-are-actively-restored-and-made-live-on-different-ports/",
+    "excerpt": "This guide will help you set up PostgreSQL (Percona-PostgreSQL-13) and pgBackRest (Percona-pgBackRest) on a machine (clusterreplica) to restore archived databases and make them live on different ports. We will cover the installation process and provide a script to automate the setup for multiple clusters.",
+    "tags": [
+      "pgbackrest",
+      "postgresql",
+      "rsync"
+    ],
+    "category": "PostgreSQL",
+    "date": "2024-12-02"
+  }
+]
