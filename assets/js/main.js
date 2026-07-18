@@ -34,6 +34,14 @@
       if (icon) {
         icon.className = next === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
       }
+
+      var favicon = document.getElementById('siteFavicon');
+      if (favicon) {
+        favicon.href = next === 'light'
+          ? '/img/favicon-pen-light.svg'
+          : '/img/favicon-pen-dark.svg';
+      }
+
       var meta = document.querySelector('meta[name="theme-color"]');
       if (meta) {
         meta.setAttribute('content', next === 'light' ? '#f7f5f1' : '#0a0a0b');

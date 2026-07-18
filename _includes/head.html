@@ -16,6 +16,22 @@
         theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
       }
       document.documentElement.setAttribute('data-theme', theme);
+
+      var penFavicon = theme === 'light'
+        ? "{{ '/img/favicon-pen-light.svg' | relative_url }}"
+        : "{{ '/img/favicon-pen-dark.svg' | relative_url }}";
+
+      var existing = document.querySelector('link#siteFavicon');
+      if (existing) {
+        existing.href = penFavicon;
+      } else {
+        var link = document.createElement('link');
+        link.id = 'siteFavicon';
+        link.rel = 'icon';
+        link.type = 'image/svg+xml';
+        link.href = penFavicon;
+        document.head.appendChild(link);
+      }
     })();
   </script>
 
@@ -24,7 +40,7 @@
   <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
 
   <!-- Favicon -->
-  <link rel="shortcut icon" href="{{ '/img/headshot1-square4.jpg' | relative_url }}">
+  <link id="siteFavicon" rel="icon" type="image/svg+xml" href="{{ '/img/favicon-pen-dark.svg' | relative_url }}">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
