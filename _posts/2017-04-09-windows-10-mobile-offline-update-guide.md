@@ -12,13 +12,6 @@ read_time: 12
 
 This guide compiles two sources — an English technical walkthrough and a Bengali community tutorial — into one consolidated reference for using the community "Offline Update Project" (`iutool`) to push Windows 10 Mobile onto Lumia and other Windows Phone 8.x devices that Microsoft's official Upgrade Advisor no longer supports. Since Microsoft shut down WP8.1 update servers in mid-2017, this offline `.cab` deployment method (built around Microsoft's own `iutool.exe`/`getdulogs.exe` binaries) is the only way to move these devices to Windows 10 Mobile.
 
-**Link verification note:** I checked every source link.
-
-- The GitHub repository (`HikariCalyx/w10m_oup`) is live and matches the supported-device list quoted in the source material.
-- The main XDA thread is live at **`https://xdaforums.com/t/guide-win10-mobile-semi-offline-update-project-10586-107-updated-v5-3-beta6.3527340/`** — note this is the correct base URL; the specific `/page-14` and `/page-24` anchors cited in the source material could not be independently confirmed (XDA blocks automated fetches of individual pages), but the thread itself, its author (hikari_calyx), and its content are verified genuine.
-- The Quora link and the Mega/group-hosted file links (iutool.zip, Keyboard.cab, the Bengali tutorial's package mirrors) could not be verified — Quora requires login for full content, and the Mega/Facebook-group links weren't included as fetchable URLs in the source text. Prefer the GitHub repo or the XDA thread's own attachments (linked below) over third-party mirrors.
-
----
 
 ## ⚠️ Before You Start
 
@@ -163,18 +156,6 @@ Once on the initial 10586.107 build, later Windows 10 Mobile builds (Anniversary
 6. Repeat the same process pointed at the RS2 package set once RS1 is successfully installed.
 
 **Simpler alternative for this stage:** the newer semi-automated tool from the XDA thread (`HCTSW_WXMSOUP`, run via `run_en.cmd`) automates the `getdulogs` capture, package matching, and download steps described above — it's the actively maintained successor to the fully manual process and is generally easier to follow than hand-curating CSVs and PowerShell scripts.
-
----
-
-## Verified Sources
-
-| Source | Status |
-|---|---|
-| GitHub — `HikariCalyx/w10m_oup` (packages, README, supported-device list) | ✅ Live, confirmed current: https://github.com/HikariCalyx/w10m_oup |
-| XDA — "[GUIDE] Win10 Mobile (Semi-)Offline Update Project 10586.107" | ✅ Live, confirmed original thread by hikari_calyx: https://xdaforums.com/t/guide-win10-mobile-semi-offline-update-project-10586-107-updated-v5-3-beta6.3527340/ |
-| Specific `/page-14`, `/page-24` anchors cited in the English source | ⚠️ Unverifiable via automated fetch (site blocks bots on individual pages), but the base thread is confirmed genuine and contains matching content |
-| Quora link on USB port advice | ⚠️ Not independently verified |
-| Mega/Facebook-group mirrors named in the Bengali tutorial (`iutool.zip`, `iutool_1703.zip`, `Keyboard.cab`, the 10586.107 offline `.wim`) | ⚠️ Not fetchable/verifiable — use the GitHub repo or XDA thread attachments instead, as those are confirmed authentic and actively maintained |
 
 ---
 
