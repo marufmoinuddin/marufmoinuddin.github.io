@@ -1209,7 +1209,67 @@ a.contact-card:hover {
   border: 1px solid var(--border);
 }
 
-/* GitHub-like code wrapper and header */
+/* --- GitHub-style tables --- */
+.article-content table {
+  display: block;
+  max-width: 100%;
+  width: fit-content;
+  overflow-x: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 1.5rem 0;
+  font-size: 0.925rem;
+  line-height: 1.6;
+  white-space: normal;
+  -webkit-overflow-scrolling: touch;
+}
+
+.article-content table::-webkit-scrollbar {
+  height: 6px;
+}
+
+.article-content table::-webkit-scrollbar-track {
+  background: var(--bg-soft);
+  border-radius: 3px;
+}
+
+.article-content table::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+.article-content table th,
+.article-content table td {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--border-strong);
+  text-align: left;
+  vertical-align: top;
+}
+
+.article-content table th {
+  font-weight: 600;
+  background: var(--bg-soft);
+  color: var(--text);
+  border-bottom-width: 2px;
+}
+
+.article-content table td {
+  color: var(--text);
+}
+
+.article-content table thead th {
+  border-bottom-color: var(--border-strong);
+}
+
+.article-content table tbody tr:nth-child(even) {
+  background: var(--bg-soft);
+}
+
+.article-content table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* --- GitHub-like code wrapper and header */
 .code-wrapper {
   margin: 1.5rem 0;
   border-radius: var(--radius-sm);
