@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Setting Up Streaming Standby for PostgreSQL Cluster
+title: Setting Up Streaming Standby for PGO CrunchyPostgreSQL Cluster
 date: 2025-07-08
 category: PostgreSQL
 tags: [kubernetes, postgresql, streaming-replication]
