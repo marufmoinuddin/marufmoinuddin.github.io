@@ -1401,11 +1401,16 @@ a.contact-card:hover {
 
 /* --- GitHub-like code wrapper and header */
 .code-wrapper {
-  margin: 1.5rem 0;
+  margin: 0.85rem 0;
   border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--border);
-  background: transparent;
+  background: var(--bg-soft);
+}
+
+.article-content .highlighter-rouge,
+.article-content .highlight {
+  margin: 0;
 }
 
 .code-header {
@@ -1413,11 +1418,11 @@ a.contact-card:hover {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.45rem 0.75rem;
-  background: color-mix(in srgb, var(--bg-soft) 78%, transparent);
+  padding: 0.34rem 0.65rem;
+  background: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
   border-bottom: 1px solid var(--border);
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   color: var(--text-faint);
 }
 
@@ -1430,7 +1435,7 @@ a.contact-card:hover {
 
 .code-wrapper pre {
   margin: 0;
-  padding: 0.9rem 1rem;
+  padding: 0.5rem 0.6rem;
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   background: var(--bg-soft);
 }
@@ -1439,42 +1444,41 @@ a.contact-card:hover {
   display: block;
 }
 
-/* Each row contains a gutter cell and a code cell; grid ensures matching heights */
 .code-row {
   display: grid;
-  grid-template-columns: 3.1rem 1fr;
-  gap: 0.75rem;
+  grid-template-columns: 2.6rem minmax(0, 1fr);
+  gap: 0.55rem;
   align-items: start;
-  padding: 0 0.6rem;
 }
 
 .line-num {
-  /* match code font/size/line-height exactly to align */
   font-family: var(--font-mono);
-  font-size: 0.92rem;
-  line-height: 1.6;
+  font-size: 0.8rem;
+  line-height: 1.42;
   color: var(--text-faint);
   text-align: right;
   user-select: none;
-  padding: 0.25rem 0.5rem 0.25rem 0;
+  padding: 0.03rem 0.45rem 0.03rem 0;
+  border-right: 1px solid var(--border);
 }
 
 .code-line {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
-  padding: 0.25rem 0 0.25rem 0;
   font-family: var(--font-mono);
-  font-size: 0.92rem;
-  line-height: 1.6;
+  font-size: 0.84rem;
+  line-height: 1.42;
+  color: inherit;
+  padding: 0.03rem 0;
 }
 
 .code-copy-btn {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 0.78rem;
-  padding: 0.28rem 0.6rem;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.48rem;
   border-radius: 6px;
   cursor: pointer;
   transition: color var(--ease), border-color var(--ease), transform var(--ease);
@@ -1497,16 +1501,176 @@ a.contact-card:hover {
 .rouge-gutter pre { margin: 0; padding: 0; }
 .rouge-code { padding-left: 0; }
 
-/* Enable wrapping inside code blocks (preserve whitespace but wrap long lines) */
+/* Keep code compact */
 .article-content pre,
 .code-wrapper pre,
 .rouge-code pre {
-  white-space: pre-wrap; /* CSS3 */
-  white-space: -moz-pre-wrap; /* Gecko */
-  white-space: -pre-wrap; /* Opera 4-6 */
-  white-space: -o-pre-wrap; /* Opera 7 */
+  white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
+  overflow-x: visible;
+}
+
+.article-content pre code,
+.rouge-code pre,
+.highlight pre {
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.48;
+}
+
+/* --- Syntax Highlighting: VS Code Dark+ (default dark theme) --- */
+.highlight,
+.highlight pre,
+.rouge-code pre {
+  color: #d4d4d4;
+}
+
+.highlight .c,
+.highlight .cm,
+.highlight .c1,
+.highlight .cs,
+.highlight .cp {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt,
+.highlight .ow {
+  color: #569cd6;
+}
+
+.highlight .nb,
+.highlight .bp,
+.highlight .fm,
+.highlight .nf,
+.highlight .nc {
+  color: #dcdcaa;
+}
+
+.highlight .s,
+.highlight .sa,
+.highlight .sb,
+.highlight .sc,
+.highlight .dl,
+.highlight .sd,
+.highlight .s2,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .sr,
+.highlight .s1,
+.highlight .ss {
+  color: #ce9178;
+}
+
+.highlight .m,
+.highlight .mb,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .il,
+.highlight .mo {
+  color: #b5cea8;
+}
+
+.highlight .na,
+.highlight .no,
+.highlight .nv,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi,
+.highlight .vm,
+.highlight .nt,
+.highlight .nx {
+  color: #9cdcfe;
+}
+
+.highlight .o,
+.highlight .p,
+.highlight .w {
+  color: #d4d4d4;
+}
+
+/* --- Syntax Highlighting: GitHub Light (light theme) --- */
+[data-theme="light"] .highlight,
+[data-theme="light"] .highlight pre,
+[data-theme="light"] .rouge-code pre {
+  color: #24292f;
+}
+
+[data-theme="light"] .highlight .c,
+[data-theme="light"] .highlight .cm,
+[data-theme="light"] .highlight .c1,
+[data-theme="light"] .highlight .cs,
+[data-theme="light"] .highlight .cp {
+  color: #6e7781;
+  font-style: italic;
+}
+
+[data-theme="light"] .highlight .k,
+[data-theme="light"] .highlight .kc,
+[data-theme="light"] .highlight .kd,
+[data-theme="light"] .highlight .kn,
+[data-theme="light"] .highlight .kp,
+[data-theme="light"] .highlight .kr,
+[data-theme="light"] .highlight .kt,
+[data-theme="light"] .highlight .ow {
+  color: #cf222e;
+}
+
+[data-theme="light"] .highlight .nb,
+[data-theme="light"] .highlight .bp,
+[data-theme="light"] .highlight .fm,
+[data-theme="light"] .highlight .nf,
+[data-theme="light"] .highlight .nc {
+  color: #8250df;
+}
+
+[data-theme="light"] .highlight .s,
+[data-theme="light"] .highlight .sa,
+[data-theme="light"] .highlight .sb,
+[data-theme="light"] .highlight .sc,
+[data-theme="light"] .highlight .dl,
+[data-theme="light"] .highlight .sd,
+[data-theme="light"] .highlight .s2,
+[data-theme="light"] .highlight .se,
+[data-theme="light"] .highlight .sh,
+[data-theme="light"] .highlight .si,
+[data-theme="light"] .highlight .sx,
+[data-theme="light"] .highlight .sr,
+[data-theme="light"] .highlight .s1,
+[data-theme="light"] .highlight .ss {
+  color: #0a3069;
+}
+
+[data-theme="light"] .highlight .m,
+[data-theme="light"] .highlight .mb,
+[data-theme="light"] .highlight .mf,
+[data-theme="light"] .highlight .mh,
+[data-theme="light"] .highlight .mi,
+[data-theme="light"] .highlight .il,
+[data-theme="light"] .highlight .mo {
+  color: #0550ae;
+}
+
+[data-theme="light"] .highlight .na,
+[data-theme="light"] .highlight .no,
+[data-theme="light"] .highlight .nv,
+[data-theme="light"] .highlight .vc,
+[data-theme="light"] .highlight .vg,
+[data-theme="light"] .highlight .vi,
+[data-theme="light"] .highlight .vm,
+[data-theme="light"] .highlight .nt,
+[data-theme="light"] .highlight .nx {
+  color: #116329;
 }
 
 .callout {

@@ -283,6 +283,10 @@
         }
         el = el.parentElement;
       }
+      if (!lang && code.className) {
+        var codeMatch = code.className.match(/\blanguage-([a-zA-Z0-9_-]+)\b/);
+        if (codeMatch) lang = codeMatch[1];
+      }
 
       // create wrapper and header
       var wrapper = document.createElement('div');
@@ -293,7 +297,7 @@
 
       var langSpan = document.createElement('span');
       langSpan.className = 'code-lang';
-      langSpan.textContent = lang || '';
+      langSpan.textContent = lang || 'code';
       header.appendChild(langSpan);
 
       var btn = document.createElement('button');
@@ -307,7 +311,7 @@
       pre.parentElement.insertBefore(wrapper, pre);
       wrapper.appendChild(header);
 
-      // Transform existing code into two-column layout: gutter + code body
+      // Build compact row-based layout: line number gutter + wrapped code line
       try {
         var rougeCodeTd = code.querySelector('td.rouge-code');
         var sourcePre = null;
@@ -320,7 +324,11 @@
         var rawHtml = sourcePre ? sourcePre.innerHTML : code.innerHTML;
         var lines = rawHtml.split('\n');
 
-        // Build a row-per-line layout so numbers align with wrapped lines
+        // Remove trailing blank line for tighter blocks.
+        if (lines.length > 1 && lines[lines.length - 1].trim() === '') {
+          lines.pop();
+        }
+
         var block = document.createElement('div');
         block.className = 'code-block';
 
@@ -328,36 +336,35 @@
           var row = document.createElement('div');
           row.className = 'code-row';
 
-          var lineNum = document.createElement('div');
+          var lineNum = document.createElement('span');
           lineNum.className = 'line-num';
-          // hide number for empty/whitespace-only lines
-          lineNum.textContent = (ln && ln.trim()) ? String(idx + 1) : '';
+          lineNum.textContent = String(idx + 1);
 
-          var lineDiv = document.createElement('div');
+          var lineDiv = document.createElement('span');
           lineDiv.className = 'code-line';
-          lineDiv.innerHTML = ln || '';
+          lineDiv.innerHTML = ln || '&nbsp;';
 
           row.appendChild(lineNum);
           row.appendChild(lineDiv);
           block.appendChild(row);
         });
 
-        // Clear original pre content then insert our block
         while (pre.firstChild) pre.removeChild(pre.firstChild);
         pre.appendChild(block);
       } catch (e) {
-        // if anything fails, fall back to original pre
+        // Fall back to original markup if transformation fails.
       }
 
       wrapper.appendChild(pre);
 
       btn.addEventListener('click', function () {
         var text = '';
-        // Prefer the rendered per-line `.code-line` content inside our wrapper (excludes gutter)
         var linesNodes = wrapper.querySelectorAll('.code-row .code-line');
         if (linesNodes && linesNodes.length) {
           var parts = [];
-          linesNodes.forEach(function (ln) { parts.push(ln.innerText.replace(/\u00A0/g, ' ')); });
+          linesNodes.forEach(function (ln) {
+            parts.push(ln.innerText.replace(/\u00A0/g, ' '));
+          });
           text = parts.join('\n');
         } else {
           var rougeCodeTd = code.querySelector('td.rouge-code');
