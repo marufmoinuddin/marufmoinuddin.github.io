@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Tags
-description: "Browse posts by tag."
+description: "Browse posts by year and tag."
 permalink: /tags/
 ---
 
@@ -18,29 +18,124 @@ permalink: /tags/
     <a href="{{ '/blog/' | relative_url }}" class="btn btn-ghost">Back to blog</a>
   </div>
   {% else %}
-  <div class="tag-cloud">
+  <div class="tag-cloud" id="tagCloud">
     {% for tag in all_tags %}
     {% assign slug = tag | slugify %}
-    <a href="{{ '/tags/' | relative_url }}#{{ slug }}" class="tag-cloud-item">{{ tag }}</a>
+    <a href="#" class="tag-cloud-item" data-tag="{{ slug }}">{{ tag }}</a>
     {% endfor %}
   </div>
 
-  {% for tag in all_tags %}
-  {% assign slug = tag | slugify %}
-  <section class="tag-section">
-    <h2 id="{{ slug }}">{{ tag }}</h2>
-    <ul class="tag-post-list">
-      {% assign tagged = site.posts | where_exp: "p", "p.tags contains tag" | sort: "date" | reverse %}
-      {% for item in tagged %}
-      <li>
-        <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
-        <time class="tag-post-meta" datetime="{{ item.date | date_to_xmlschema }}">
-          {{ item.date | date: "%B %d, %Y" }}
-        </time>
-      </li>
-      {% endfor %}
-    </ul>
+  {% assign posts_by_year = site.posts | group_by_exp: "item", "item.date | date: '%Y'" %}
+  {% for year in posts_by_year %}
+  <section class="archive-year">
+    <h2 class="archive-year-title" id="year-{{ year.name }}">{{ year.name }}</h2>
+    {% assign months = year.items | group_by_exp: "item", "item.date | date: '%B'" %}
+    {% for month in months %}
+    <div class="archive-month">
+      <h3 class="archive-month-title">{{ month.name }}</h3>
+      <ul class="archive-list">
+        {% for item in month.items %}
+        {% assign item_tags = item.tags | join: ' ' %}
+        <li data-tags="{{ item_tags | downcase }}">
+          <div class="archive-item-main">
+            <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+            <time class="archive-meta" datetime="{{ item.date | date_to_xmlschema }}">
+              {{ item.date | date: "%b %d" }}
+            </time>
+          </div>
+          {% if item.tags.size > 0 %}
+          <div class="tag-page-badges">
+            {% for tag in item.tags %}
+            <span class="tag-badge">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
   </section>
   {% endfor %}
   {% endif %}
 </div>
+
+<script>
+(function() {
+  var cloud = document.getElementById('tagCloud');
+  if (!cloud) return;
+
+  var tags = cloud.querySelectorAll('.tag-cloud-item');
+  var posts = document.querySelectorAll('.archive-list li[data-tags]');
+  var yearSections = document.querySelectorAll('.archive-year');
+  var activeTags = [];
+
+  function filterPosts() {
+    // Update tag cloud active state
+    tags.forEach(function(t) {
+      t.classList.toggle('active', activeTags.indexOf(t.getAttribute('data-tag')) !== -1);
+    });
+
+    // Show/hide posts — AND logic: post must have ALL active tags
+    var anyVisible = false;
+    posts.forEach(function(li) {
+      if (activeTags.length === 0) {
+        li.style.display = '';
+        anyVisible = true;
+      } else {
+        var itemTags = (li.getAttribute('data-tags') || '').toLowerCase().split(/\s+/);
+        var match = activeTags.every(function(slug) {
+          return itemTags.indexOf(slug) !== -1;
+        });
+        li.style.display = match ? '' : 'none';
+        if (match) anyVisible = true;
+      }
+    });
+
+    // Hide empty year/month sections
+    yearSections.forEach(function(section) {
+      var monthDivs = section.querySelectorAll('.archive-month');
+      monthDivs.forEach(function(m) {
+        var lis = m.querySelectorAll('.archive-list li');
+        var hasVisible = Array.from(lis).some(function(li) {
+          return li.style.display !== 'none';
+        });
+        m.style.display = hasVisible ? '' : 'none';
+      });
+      var hasVisible = Array.from(section.querySelectorAll('.archive-month')).some(function(m) {
+        return m.style.display !== 'none';
+      });
+      section.style.display = hasVisible ? '' : 'none';
+    });
+
+    // Show/hide no-results message
+    var msg = document.getElementById('tagNoResults');
+    if (!anyVisible && activeTags.length > 0) {
+      if (!msg) {
+        msg = document.createElement('p');
+        msg.id = 'tagNoResults';
+        msg.className = 'empty-card';
+        msg.innerHTML = '<div class="empty-icon"><i class="fa-solid fa-tag"></i></div><h3>No posts found</h3><p>No posts match the selected tags. Try a different combination.</p>';
+        cloud.parentNode.insertBefore(msg, cloud.nextSibling);
+      }
+      msg.style.display = '';
+    } else {
+      if (msg) msg.style.display = 'none';
+    }
+  }
+
+  tags.forEach(function(t) {
+    t.addEventListener('click', function(e) {
+      e.preventDefault();
+      var slug = t.getAttribute('data-tag');
+      var idx = activeTags.indexOf(slug);
+      if (idx === -1) {
+        activeTags.push(slug);
+      } else {
+        activeTags.splice(idx, 1);
+      }
+      filterPosts();
+    });
+  });
+})();
+</script>

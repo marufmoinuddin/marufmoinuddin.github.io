@@ -27,10 +27,12 @@ permalink: /archive/
       <ul class="archive-list">
         {% for item in month.items %}
         <li>
-          <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
-          <time class="archive-meta" datetime="{{ item.date | date_to_xmlschema }}">
-            {{ item.date | date: "%b %d" }}
-          </time>
+          <div class="archive-item-main">
+            <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+            <time class="archive-meta" datetime="{{ item.date | date_to_xmlschema }}">
+              {{ item.date | date: "%b %d" }}
+            </time>
+          </div>
         </li>
         {% endfor %}
       </ul>
