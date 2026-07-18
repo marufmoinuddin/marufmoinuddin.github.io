@@ -3,7 +3,7 @@
   <div class="nav-container">
     <a href="{{ '/' | relative_url }}" class="nav-brand">
       <span class="nav-mark">M</span>
-      <span class="nav-logo-text">Moin Uddin</span>
+      <span class="nav-logo-text">Moin</span>
     </a>
 
     <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
@@ -14,6 +14,7 @@
 
     <div class="nav-links" id="navLinks">
       <a href="{{ '/blog/' | relative_url }}" {% if page.url contains '/blog/' %}class="active"{% endif %}>Blog</a>
+      <a href="{{ '/tags/' | relative_url }}" {% if page.url contains '/tags/' %}class="active"{% endif %}>Archive</a>
       <a href="{{ '/about/' | relative_url }}" {% if page.url contains '/about/' %}class="active"{% endif %}>About</a>
       <a href="{{ '/contact/' | relative_url }}" {% if page.url contains '/contact/' %}class="active"{% endif %}>Contact</a>
 

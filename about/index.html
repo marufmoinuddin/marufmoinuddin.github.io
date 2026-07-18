@@ -4,59 +4,271 @@ title: About
 description: "Operations engineer, DevOps, and systems work."
 ---
 
-<div class="about-page">
-  <div class="about-hero">
+<div class="resume-page">
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="resume-header">
     <img
       src="{{ '/img/headshot1-square4.jpg' | relative_url }}"
       alt="{{ site.author }}"
-      class="about-photo"
+      class="resume-photo"
       loading="lazy"
-      width="160"
-      height="160"
+      width="140"
+      height="140"
     >
-    <div class="about-summary">
-      <p class="lead">
-        I'm an Operations Engineer and DevOps professional based in Dhaka, Bangladesh.
-        I currently work at Portonics Limited on the Telenor Myanmar / ATOM App ecosystem,
-        focusing on platform reliability, scalability, and security for large-scale telecom infrastructure.
-      </p>
-      <p>
-        I graduated from BRAC University with a BSc in Computer Science and Engineering (CGPA 3.65/4.00).
-        Day to day I work across Kubernetes orchestration, PostgreSQL administration, observability,
-        CI/CD automation, and datacenter operations.
-      </p>
-      <p>
-        Outside of work I tinker with mobile security, Android customization, and hardware —
-        always looking for the next interesting problem to solve.
-      </p>
+    <div class="resume-header-info">
+      <div class="resume-name-row">
+        <h1 class="resume-name">Moin Uddin Ahmed</h1>
+        <a href="{{ '/assets/pdf/Moin_Uddin_Ahmed_CV.pdf' | relative_url }}" class="resume-dl-btn" target="_blank" rel="noopener">
+          <i class="fa-solid fa-file-pdf"></i> CV
+        </a>
+      </div>
+      <div class="resume-title">DevOps Engineer</div>
+      <div class="resume-contact">
+        <span><i class="fa-regular fa-envelope"></i> <a href="mailto:marufmoinuddin@gmail.com">marufmoinuddin@gmail.com</a></span>
+        <span><i class="fa-solid fa-phone"></i> <a href="tel:+8801718219707">+880 1718-219707</a></span>
+        <span><i class="fa-solid fa-location-dot"></i> Banasree, Dhaka - 1219, Bangladesh</span>
+        <span><i class="fa-brands fa-github"></i> <a href="https://github.com/marufmoinuddin" target="_blank" rel="noopener">marufmoinuddin</a></span>
+        <span><i class="fa-brands fa-linkedin-in"></i> <a href="https://linkedin.com/in/marufmoinuddin" target="_blank" rel="noopener">marufmoinuddin</a></span>
+      </div>
     </div>
+  </header>
+
+  <!-- ==================== SUMMARY ==================== -->
+  <div class="resume-summary">
+    <p>
+      DevOps Engineer based in Dhaka, Bangladesh, with experience in the fintech and telecommunications industries. I specialize in building reliable infrastructure, automating workflows, improving system reliability, and troubleshooting production incidents. Passionate about learning new technologies and sharing knowledge, I enjoy solving complex problems, optimizing operations, and delivering scalable, efficient solutions in collaborative environments.
+    </p>
   </div>
 
-  <div class="about-block">
-    <h2>Current focus</h2>
-    <ul class="focus-list">
-      <li>Kubernetes cluster operations and runbook automation</li>
-      <li>PostgreSQL high availability and disaster recovery</li>
-      <li>Observability design (ELK, Prometheus, Grafana)</li>
-      <li>Secure, reliable platform foundations</li>
-    </ul>
-  </div>
+  <!-- ==================== TWO-COLUMN GRID ==================== -->
+  <div class="resume-grid">
 
-  <div class="about-block">
-    <h2>Elsewhere</h2>
-    <div class="about-social">
-      <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener" class="btn-social">
-        <i class="fa-brands fa-github"></i> GitHub
-      </a>
-      <a href="https://linkedin.com/in/{{ site.linkedin_username }}" target="_blank" rel="noopener" class="btn-social">
-        <i class="fa-brands fa-linkedin-in"></i> LinkedIn
-      </a>
-      <a href="https://twitter.com/{{ site.twitter_username }}" target="_blank" rel="noopener" class="btn-social">
-        <i class="fa-brands fa-x-twitter"></i> Twitter
-      </a>
-      <a href="{{ '/contact/' | relative_url }}" class="btn-social">
-        <i class="fa-regular fa-envelope"></i> Contact
-      </a>
+    <!-- ---- LEFT COLUMN ---- -->
+    <div class="resume-left">
+
+      <!-- Education -->
+      <div class="resume-block">
+        <h2 class="resume-block-title"><i class="fa-solid fa-graduation-cap"></i> Education</h2>
+
+        <div class="resume-edu-item">
+          <div class="resume-edu-school">BRAC University, Dhaka</div>
+          <div class="resume-edu-degree">BSc. in Computer Science and Engineering</div>
+          <div class="resume-edu-meta">
+            <span>Sep 2023</span>
+            <span>CGPA 3.65 / 4.00</span>
+          </div>
+        </div>
+
+        <div class="resume-edu-item">
+          <div class="resume-edu-school">Rajshahi Govt. City College</div>
+          <div class="resume-edu-degree">Higher Secondary Certificate (HSC)</div>
+          <div class="resume-edu-meta">
+            <span>Mar 2018</span>
+            <span>GPA 4.17 / 5.00</span>
+          </div>
+        </div>
+
+        <div class="resume-edu-item">
+          <div class="resume-edu-school">Rajshahi Collegiate School</div>
+          <div class="resume-edu-degree">Secondary School Certificate (SSC)</div>
+          <div class="resume-edu-meta">
+            <span>Jan 2016</span>
+            <span>GPA 5.00 / 5.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="resume-block">
+        <h2 class="resume-block-title"><i class="fa-solid fa-code"></i> Skills</h2>
+
+        <div class="resume-skills-group">
+          <div class="resume-skills-label">Programming</div>
+          <div class="resume-skills-tags">
+            <span class="resume-skill-tag">Python</span>
+            <span class="resume-skill-tag">Java</span>
+            <span class="resume-skill-tag">Bash</span>
+            <span class="resume-skill-tag">HTML/CSS</span>
+            <span class="resume-skill-tag">PHP</span>
+            <span class="resume-skill-tag">JavaScript</span>
+          </div>
+        </div>
+
+        <div class="resume-skills-group">
+          <div class="resume-skills-label">DevOps &amp; Infrastructure</div>
+          <div class="resume-skills-tags">
+            <span class="resume-skill-tag">Linux</span>
+            <span class="resume-skill-tag">KVM</span>
+            <span class="resume-skill-tag">CI/CD</span>
+            <span class="resume-skill-tag">Docker</span>
+            <span class="resume-skill-tag">Kubernetes</span>
+            <span class="resume-skill-tag">PGO Crunchy</span>
+            <span class="resume-skill-tag">Redis</span>
+            <span class="resume-skill-tag">Ansible</span>
+            <span class="resume-skill-tag">ELK/Elasticsearch</span>
+            <span class="resume-skill-tag">Prometheus/Grafana</span>
+            <span class="resume-skill-tag">Istio</span>
+          </div>
+        </div>
+
+        <div class="resume-skills-group">
+          <div class="resume-skills-label">Database</div>
+          <div class="resume-skills-tags">
+            <span class="resume-skill-tag">PostgreSQL</span>
+            <span class="resume-skill-tag">MySQL</span>
+            <span class="resume-skill-tag">PipelineWise</span>
+          </div>
+        </div>
+
+        <div class="resume-skills-group">
+          <div class="resume-skills-label">Frameworks</div>
+          <div class="resume-skills-tags">
+            <span class="resume-skill-tag">Django</span>
+            <span class="resume-skill-tag">Laravel</span>
+          </div>
+        </div>
+
+        <div class="resume-skills-group">
+          <div class="resume-skills-label">Monitoring</div>
+          <div class="resume-skills-tags">
+            <span class="resume-skill-tag">AppDynamics</span>
+            <span class="resume-skill-tag">Grafana</span>
+            <span class="resume-skill-tag">Prometheus</span>
+            <span class="resume-skill-tag">Splunk</span>
+            <span class="resume-skill-tag">Kibana</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accomplishments -->
+      <div class="resume-block">
+        <h2 class="resume-block-title"><i class="fa-solid fa-trophy"></i> Accomplishments</h2>
+
+        <div class="resume-acc-item">
+          <i class="fa-solid fa-medal resume-acc-icon"></i>
+          <span>1<sup>st</sup> and 2<sup>nd</sup> positions in Divisional Science Fair Competitions (2016, 2017) for the innovative <em>"Smart Plug"</em> system, automating electric and electronic gadgets.</span>
+        </div>
+
+        <div class="resume-acc-item">
+          <i class="fa-solid fa-medal resume-acc-icon"></i>
+          <span>3<sup>rd</sup> position in BCSIR Science Project, Rajshahi.</span>
+        </div>
+      </div>
+
     </div>
+
+    <!-- ---- RIGHT COLUMN ---- -->
+    <div class="resume-right">
+
+      <!-- Experience -->
+      <div class="resume-block">
+        <h2 class="resume-block-title"><i class="fa-solid fa-briefcase"></i> Experience</h2>
+
+        <div class="resume-exp-item">
+          <div class="resume-exp-header">
+            <div>
+              <div class="resume-exp-role">Operations Engineer</div>
+              <div class="resume-exp-company">Portonics Limited, Dhaka</div>
+            </div>
+            <div class="resume-exp-date">Aug 2025 – Present</div>
+          </div>
+          <div class="resume-exp-desc">
+            Working as a DevOps Engineer at Portonics on the Telenor Myanmar / ATOM App development team, focusing on platform reliability, scalability, and performance for the large-scale telecom ecosystem. Managing containerized deployments with Docker and Kubernetes to ensure reliable releases and high system availability. Collaborating with engineering and product teams to automate workflows and improve monitoring using Splunk and AppDynamics for proactive issue detection. Administering PostgreSQL databases to maintain application stability and data integrity while coordinating VA/PT cycles for security compliance. Troubleshooting production issues using ELK and Kibana, driving root-cause analysis and ensuring consistent service quality and SLA compliance.
+          </div>
+        </div>
+
+        <div class="resume-exp-item">
+          <div class="resume-exp-header">
+            <div>
+              <div class="resume-exp-role">DevOps Engineer</div>
+              <div class="resume-exp-company">UPAY (UCB Bank PLC &amp; UCB Fintech Company Ltd.), Dhaka</div>
+            </div>
+            <div class="resume-exp-date">Jun 2024 – Aug 2025</div>
+          </div>
+          <div class="resume-exp-desc">
+            Leveraged advanced tools and practices to optimize system performance and scalability. Managed Elastic Stack (ELK) and Kibana for logging and visualization, Kubernetes for cluster orchestration, and Prometheus with Grafana for monitoring. Deployed Rook Ceph for storage solutions and PipelineWise with Apache Airflow for data warehousing. Scripted complex automations and semi-automated large tasks with Ansible. Maintained expertise in PGO Crunchy for database management in Kubernetes clusters.
+          </div>
+        </div>
+      </div>
+
+      <!-- Notable Projects -->
+      <div class="resume-block">
+        <h2 class="resume-block-title"><i class="fa-solid fa-flask"></i> Notable Projects</h2>
+
+        <div class="resume-project-item">
+          <div class="resume-project-name">Datacenter Migration of Core Application Services</div>
+          <div class="resume-project-tech">Kubernetes, PostgreSQL, Shell, Python &middot; 2026</div>
+          <div class="resume-project-desc">
+            Migrated core application, database, and backend services from an older datacenter to a newer infrastructure, coordinating cutover with minimal downtime and validating data integrity and service continuity post-migration.
+          </div>
+        </div>
+
+        <div class="resume-project-item">
+          <div class="resume-project-name">Repository Migration from Bitbucket to GitHub</div>
+          <div class="resume-project-tech">Git, Python, Shell, CI/CD &middot; 2025</div>
+          <div class="resume-project-desc">
+            Performed migration of source repositories from Bitbucket to GitHub, preserving branch history, tags, and access permissions while reconfiguring CI/CD pipelines to ensure zero disruption to ongoing development workflows.
+          </div>
+        </div>
+
+        <div class="resume-project-item">
+          <div class="resume-project-name">Data Center Disaster Recovery (DC DR) Migration with Logical Replication</div>
+          <div class="resume-project-tech">Kubernetes, Python, Shell, Istio, PostgreSQL, PGO Crunchy &middot; 2024</div>
+          <div class="resume-project-desc">
+            Migrated critical systems with minimal downtime, set up a Kubernetes cluster, and deployed services. Installed Crunchy PGO and configured PostgreSQL logical replication for seamless data migration and high availability, validated with testing and monitoring.
+          </div>
+        </div>
+
+        <div class="resume-project-item">
+          <div class="resume-project-name">Highly Available PostgreSQL Cluster</div>
+          <div class="resume-project-tech">Patroni, etcd, HAProxy, Keepalived &middot; 2023</div>
+          <div class="resume-project-desc">
+            Built a resilient PostgreSQL cluster with Patroni for failover, etcd for state management, HAProxy for load balancing, and Keepalived for VIP, ensuring production-grade availability.
+          </div>
+        </div>
+
+        <div class="resume-project-item">
+          <div class="resume-project-name">Apache Airflow &amp; PipelineWise ETL Setup</div>
+          <div class="resume-project-tech">Python, Shell &middot; 2024</div>
+          <div class="resume-project-desc">
+            Set up Airflow for workflow orchestration and PipelineWise for efficient ETL to data warehouse.
+          </div>
+        </div>
+
+        <div class="resume-project-item">
+          <div class="resume-project-name">Kubernetes PVC &amp; SnapDB Rsync</div>
+          <div class="resume-project-tech">Python, Shell &middot; 2024</div>
+          <div class="resume-project-desc">
+            Designed and implemented an rsync-based solution for PGO Crunchy PostgreSQL pods to synchronize pgBackRest archive and backup files to SnapDB (cold backup), enabling real-time database replication.
+          </div>
+        </div>
+      </div>
+
+      <!-- References -->
+      <div class="resume-block">
+        <h2 class="resume-block-title"><i class="fa-solid fa-user-check"></i> References</h2>
+
+        <div class="resume-ref-item">
+          <div class="resume-ref-name">M. A. Jobayer Bin Bakkre</div>
+          <div class="resume-ref-title">Assistant Vice President, Community Bank Bangladesh PLC</div>
+          <div class="resume-ref-contact">
+            <i class="fa-regular fa-envelope"></i> <a href="mailto:majobayer@gmail.com">majobayer@gmail.com</a> &middot;
+            <i class="fa-solid fa-phone"></i> +880 1712-519101
+          </div>
+        </div>
+
+        <div class="resume-ref-item">
+          <div class="resume-ref-name">Muhammad Iqbal Hossain, PhD</div>
+          <div class="resume-ref-title">Associate Professor, Dept. of CSE, BRAC University</div>
+          <div class="resume-ref-contact">
+            <i class="fa-regular fa-envelope"></i> <a href="mailto:iqbal.hossain@bracu.ac.bd">iqbal.hossain@bracu.ac.bd</a> &middot;
+            <i class="fa-solid fa-phone"></i> +880 9617-445122
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   </div>
 </div>
