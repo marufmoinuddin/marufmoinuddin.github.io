@@ -175,15 +175,15 @@ Monitor the replication lag and take action if it increases. The action may invo
 2. Review the output to confirm the lag value for the replica. If the lag is increasing over time, proceed with the next steps.
 3. Reduce the number of replicas to 1 to remove the lagging replica:
    ```
-   kubectl patch postgrescluster.postgres-operator.crunchydata.com -n prod-db --type='json' -p='[{"op": "replace", "path": "/spec/instances/0/replicas", "value":1}]' banglalinkussd
+   kubectl patch postgrescluster.postgres-operator.crunchydata.com -n db-ns --type='json' -p='[{"op": "replace", "path": "/spec/instances/0/replicas", "value":1}]' banglalinkussd
    ```
 4. Wait for the cluster to stabilize, then verify the replica count:
    ```
-   kubectl get postgrescluster -n prod-db banglalinkussd -o jsonpath='{.spec.instances[0].replicas}'
+   kubectl get postgrescluster -n db-ns banglalinkussd -o jsonpath='{.spec.instances[0].replicas}'
    ```
 5. Increase the replica count back to 2:
    ```
-   kubectl patch postgrescluster.postgres-operator.crunchydata.com -n prod-db --type='json' -p='[{"op": "replace", "path": "/spec/instances/0/replicas", "value":2}]' banglalinkussd
+   kubectl patch postgrescluster.postgres-operator.crunchydata.com -n db-ns --type='json' -p='[{"op": "replace", "path": "/spec/instances/0/replicas", "value":2}]' banglalinkussd
    ```
 6. Confirm the new replica is running and lag is resolved:
    ```
@@ -215,27 +215,27 @@ Investigate the high CPU usage and scale resources if necessary.
 
 1. Look for the master pod:
    ```
-   kubectl get pods -n prod-db  -l postgres-operator.crunchydata.com/role=master,postgres-operator.crunchydata.com/cluster=flds
+   kubectl get pods -n db-ns  -l postgres-operator.crunchydata.com/role=master,postgres-operator.crunchydata.com/cluster=flds
    ```
 2. Check the pod logs for unusual activity:
    ```
-   kubectl logs flds-cluster-5f7d9c8b-kj9p2 -n prod-db
+   kubectl logs flds-cluster-5f7d9c8b-kj9p2 -n db-ns
    ```
 3. Exec into the pod and run `patronictl list` to verify the primary status and active queries:
    ```
-   kubectl exec -it flds-cluster-5f7d9c8b-kj9p2 -n prod-db -- patronictl list
+   kubectl exec -it flds-cluster-5f7d9c8b-kj9p2 -n db-ns -- patronictl list
    ```
 4. Identify long-running queries using:
    ```
-   kubectl exec -it flds-cluster-5f7d9c8b-kj9p2 -n prod-db -- psql -U postgres -c "SELECT pid, query, state, wait_event FROM pg_stat_activity WHERE state = 'active';"
+   kubectl exec -it flds-cluster-5f7d9c8b-kj9p2 -n db-ns -- psql -U postgres -c "SELECT pid, query, state, wait_event FROM pg_stat_activity WHERE state = 'active';"
    ```
 5. If a specific query is causing the issue, terminate it:
    ```
-   kubectl exec -it flds-cluster-5f7d9c8b-kj9p2 -n prod-db -- psql -U postgres -c "SELECT pg_terminate_backend(<pid>);"
+   kubectl exec -it flds-cluster-5f7d9c8b-kj9p2 -n db-ns -- psql -U postgres -c "SELECT pg_terminate_backend(<pid>);"
    ```
 6. If CPU usage remains high due to workload, scale the primary pod’s resources by editing the PostgresCluster spec:
    ```
-   kubectl edit postgrescluster flds -n prod-db
+   kubectl edit postgrescluster flds -n db-ns
    ```
    - Update the `resources` section under `spec.instances[0]`:
      ```yaml
@@ -249,7 +249,7 @@ Investigate the high CPU usage and scale resources if necessary.
      ```
 7. Apply the changes and monitor CPU usage:
    ```
-   kubectl top pod flds-cluster-5f7d9c8b-kj9p2 -n prod-db
+   kubectl top pod flds-cluster-5f7d9c8b-kj9p2 -n db-ns
    ```
 
 ---
@@ -259,17 +259,17 @@ Investigate the high CPU usage and scale resources if necessary.
 **Details:**
 
 - **Timestamp:** 2025-04-11 09:45:12
-- **Cluster:** amexpg
+- **Cluster:** mydatabase
 - **Event:** Replica creation failed
-- **Error Message:** "Pod amexpg-cluster-7d8f9c4b-mn5k3 in CrashLoopBackOff"
+- **Error Message:** "Pod mydatabase-cluster-7d8f9c4b-mn5k3 in CrashLoopBackOff"
 - **Affected Pod Details:**
-  - **Pod:** amexpg-cluster-7d8f9c4b-mn5k3
+  - **Pod:** mydatabase-cluster-7d8f9c4b-mn5k3
   - **Status:** CrashLoopBackOff
   - **Restart Count:** 5
   - **Node:** <worker-node-hostname>
 
 **Explanation:**
-The replica pod `amexpg-cluster-7d8f9c4b-mn5k3` is in a `CrashLoopBackOff` state, indicating repeated failures during startup. This could be due to misconfiguration, resource constraints, or issues with the primary pod.
+The replica pod `mydatabase-cluster-7d8f9c4b-mn5k3` is in a `CrashLoopBackOff` state, indicating repeated failures during startup. This could be due to misconfiguration, resource constraints, or issues with the primary pod.
 
 **Solution:**
 Diagnose the crash and recreate the replica. If the issue persists, check the primary pod's WAL sender status.
@@ -278,31 +278,31 @@ Diagnose the crash and recreate the replica. If the issue persists, check the pr
 
 1. Check the pod logs for the root cause:
    ```
-   kubectl logs amexpg-cluster-7d8f9c4b-mn5k3 -n prod-db
+   kubectl logs mydatabase-cluster-7d8f9c4b-mn5k3 -n db-ns
    ```
 2. Describe the pod to identify events or resource issues:
    ```
-   kubectl describe pod amexpg-cluster-7d8f9c4b-mn5k3 -n prod-db
+   kubectl describe pod mydatabase-cluster-7d8f9c4b-mn5k3 -n db-ns
    ```
 3. If the issue is due to misconfiguration (e.g., WAL sync failure), delete the failing pod:
    ```
-   kubectl delete pod amexpg-cluster-7d8f9c4b-mn5k3 -n prod-db
+   kubectl delete pod mydatabase-cluster-7d8f9c4b-mn5k3 -n db-ns
    ```
 4. Verify that PGO recreates the replica:
    ```
-   kubectl get pods -l postgres-operator.crunchydata.com/cluster=amexpg -n prod-db
+   kubectl get pods -l postgres-operator.crunchydata.com/cluster=mydatabase -n db-ns
    ```
 5. If the replica continues to fail, check the primary’s WAL sender status:
    ```
-   kubectl exec -it amexpg-primary-6g5h8j9k-lp2m3 -n prod-db -- psql -U postgres -c "SELECT * FROM pg_stat_replication;"
+   kubectl exec -it mydatabase-primary-6g5h8j9k-lp2m3 -n db-ns -- psql -U postgres -c "SELECT * FROM pg_stat_replication;"
    ```
 6. If necessary, temporarily reduce replicas to stabilize, then increase again:
    ```
-   kubectl patch postgrescluster amexpg -n prod-db --type='json' -p='[{"op": "replace", "path": "/spec/instances/0/replicas", "value":1}]'
+   kubectl patch postgrescluster mydatabase -n db-ns --type='json' -p='[{"op": "replace", "path": "/spec/instances/0/replicas", "value":1}]'
    ```
    After stabilization:
    ```
-   kubectl patch postgrescluster amexpg -n prod-db --type='json' -p='[{"op": "replace", "path": "/spec/instances/0/replicas", "value":2}]'
+   kubectl patch postgrescluster mydatabase -n db-ns --type='json' -p='[{"op": "replace", "path": "/spec/instances/0/replicas", "value":2}]'
    ```
 
 ---
@@ -327,11 +327,11 @@ Resolve resource constraints or Persistent Volume Claim (PVC) issues.
 
 1. Check the backup job status:
    ```
-   kubectl get job seblbanktransfer-backup-20250412-0310 -n prod-db
+   kubectl get job seblbanktransfer-backup-20250412-0310 -n db-ns
    ```
 2. Describe the job to identify the issue:
    ```
-   kubectl describe job seblbanktransfer-backup-20250412-0310 -n prod-db
+   kubectl describe job seblbanktransfer-backup-20250412-0310 -n db-ns
    ```
 3. If the pod is stuck due to resource limits, check node capacity:
    ```
@@ -339,19 +339,19 @@ Resolve resource constraints or Persistent Volume Claim (PVC) issues.
    ```
 4. If a PVC issue is reported, verify the PVC status:
    ```
-   kubectl get pvc -l postgres-operator.crunchydata.com/cluster=seblbanktransfer -n prod-db
+   kubectl get pvc -l postgres-operator.crunchydata.com/cluster=seblbanktransfer -n db-ns
    ```
 5. If the PVC is not bound, ensure the storage class and capacity match the requirements, then delete and recreate the job:
    ```
-   kubectl delete job seblbanktransfer-backup-20250412-0310 -n prod-db
+   kubectl delete job seblbanktransfer-backup-20250412-0310 -n db-ns
    ```
 6. Trigger a new backup manually via the PostgresCluster spec:
    ```
-    kubectl-pgo backup --repoName="repo1" --options="--type=full" -n prod-db seblbanktransfer
+    kubectl-pgo backup --repoName="repo1" --options="--type=full" -n db-ns seblbanktransfer
    ```
 7. Monitor the new backup job:
    ```
-   kubectl get jobs -n prod-db
+   kubectl get jobs -n db-ns
    ```
 
 ---
@@ -378,33 +378,33 @@ Diagnose and fix the WAL archiving configuration.
 
 1. Check the primary pod logs for detailed errors:
     ```
-    kubectl logs spinthewheel-cluster-8k9j5h7d-pq3m4 -n prod-db
+    kubectl logs spinthewheel-cluster-8k9j5h7d-pq3m4 -n db-ns
     ```
 2. Verify the `pgBackRest` configuration in the PostgresCluster spec:
     ```
-    kubectl get postgrescluster spinthewheel -n prod-db -o yaml | grep -A 15 pgbackrest
+    kubectl get postgrescluster spinthewheel -n db-ns -o yaml | grep -A 15 pgbackrest
     ```
 3. Check the storage configuration and permissions:
     ```
-    kubectl get pvc -l postgres-operator.crunchydata.com/cluster=spinthewheel -n prod-db
+    kubectl get pvc -l postgres-operator.crunchydata.com/cluster=spinthewheel -n db-ns
     ```
 4. Ensure the storage volume has sufficient space:
     ```
-    kubectl exec -it spinthewheel-cluster-8k9j5h7d-pq3m4 -n prod-db -- df -h
+    kubectl exec -it spinthewheel-cluster-8k9j5h7d-pq3m4 -n db-ns -- df -h
     ```
 5. Review PostgreSQL configuration for WAL archiving settings:
     ```
-    kubectl exec -it spinthewheel-cluster-8k9j5h7d-pq3m4 -n prod-db -- psql -U postgres -c "SHOW archive_command;"
+    kubectl exec -it spinthewheel-cluster-8k9j5h7d-pq3m4 -n db-ns -- psql -U postgres -c "SHOW archive_command;"
     ```
 6. Check the status of recent WAL archives:
     ```
-    kubectl exec -it spinthewheel-cluster-8k9j5h7d-pq3m4 -n prod-db -- psql -U postgres -c "SELECT * FROM pg_stat_archiver;"
+    kubectl exec -it spinthewheel-cluster-8k9j5h7d-pq3m4 -n db-ns -- psql -U postgres -c "SELECT * FROM pg_stat_archiver;"
     ```
 7. Restart the pgBackRest repository host pod to reset connections:
     ```
-    kubectl delete pod spinthewheel-repo-host -n prod-db
+    kubectl delete pod spinthewheel-repo-host -n db-ns
     ```
 8. Monitor archiving status after changes:
     ```
-    kubectl exec -it spinthewheel-cluster-8k9j5h7d-pq3m4 -n prod-db -- psql -U postgres -c "SELECT pg_walfile_name(pg_current_wal_lsn()), pg_walfile_name(pg_last_wal_receive_lsn()), pg_walfile_name(pg_last_wal_replay_lsn());"
+    kubectl exec -it spinthewheel-cluster-8k9j5h7d-pq3m4 -n db-ns -- psql -U postgres -c "SELECT pg_walfile_name(pg_current_wal_lsn()), pg_walfile_name(pg_last_wal_receive_lsn()), pg_walfile_name(pg_last_wal_replay_lsn());"
     ```

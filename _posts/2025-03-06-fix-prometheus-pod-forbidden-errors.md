@@ -1,10 +1,10 @@
 ---
 layout: post
-title: Fix Prometheus Pod Forbidden Errors
+title: Fix Pod Forbidden Errors in PGO crunchy Prometheus
 date: 2025-03-06
 category: Kubernetes
 tags: [kubernetes, postgresql, prometheus]
-excerpt: "You’re seeing \"forbidden\" errors in the Prometheus pod logs, specifically for listing and watching pods. The service account used by Prometheus doesn’t have the necessary permissions to access cluster-wide resources."
+excerpt: "You're seeing \"forbidden\" errors in the Prometheus pod logs, specifically for listing and watching pods. The service account used by Prometheus doesn't have the necessary permissions to access cluster-wide resources."
 read_time: 3
 source_doc: 38_Fix_Prometheus.md
 draft_import: true

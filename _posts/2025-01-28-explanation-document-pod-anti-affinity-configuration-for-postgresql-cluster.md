@@ -82,7 +82,7 @@ affinity:
 - **Solution**:
   - Verify the labels applied to the pods:
     ```bash
-    kubectl get pods -n prod-db -o yaml | grep -A 5 labels:
+    kubectl get pods -n db-ns -o yaml | grep -A 5 labels:
     ```
   - Ensure the `postgres-operator.crunchydata.com/role` label is present and correct.
 

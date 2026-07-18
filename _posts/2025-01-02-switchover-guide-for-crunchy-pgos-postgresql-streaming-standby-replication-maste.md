@@ -60,7 +60,7 @@ kubectl expose svc primary-cluster-ha \
   --name=primary-cluster-ha-nodeport \
   --type=NodePort \
   --selector=postgres-operator.crunchydata.com/patroni=primary-cluster-ha \
-  -n prod-db
+  -n db-ns
 ```
 
 **Explanation**:
@@ -78,7 +78,7 @@ kubectl expose svc replica-cluster-ha \
   --name=replica-cluster-ha-nodeport \
   --type=NodePort \
   --selector=postgres-operator.crunchydata.com/patroni=replica-cluster-ha \
-  -n prod-db
+  -n db-ns
 ```
 
 ---
@@ -89,7 +89,7 @@ Verify that both clusters can communicate using the exposed NodePorts.
 
 1. Retrieve the NodePort numbers:
    ```bash
-   kubectl get svc -n prod-db | grep nodeport
+   kubectl get svc -n db-ns | grep nodeport
    ```
    Example output:
    ```

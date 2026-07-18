@@ -54,12 +54,12 @@ readinessProbe:
 
 1. **Direct Edit**: Used `kubectl edit` command to modify the deployment directly in the Kubernetes cluster.
    ```bash
-   kubectl edit deployment avcs -n prod-db
+   kubectl edit deployment avcs -n db-ns
    ```
 
 2. **Alternative Method**: Exported the current deployment YAML, edited it locally, and then re-applied it.
    ```bash
-   kubectl get deployment avcs -n prod-db -o yaml > avcs-deployment.yaml
+   kubectl get deployment avcs -n db-ns -o yaml > avcs-deployment.yaml
    # Edit avcs-deployment.yaml and apply changes
    kubectl apply -f avcs-deployment.yaml
    ```

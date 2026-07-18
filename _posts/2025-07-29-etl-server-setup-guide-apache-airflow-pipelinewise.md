@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "ETL Server Setup Guide: Apache Airflow & PipelineWise"
+title: "ETL Server Setup to transfer data from Production to a Example. Data Warehouse Guide: Apache Airflow & PipelineWise"
 date: 2025-07-29
 category: Data Engineering
 tags: [airflow, data-engineering, docker, linux, pipelinewise, postgresql, ubuntu]

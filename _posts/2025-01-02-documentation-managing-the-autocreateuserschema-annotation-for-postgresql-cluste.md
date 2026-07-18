@@ -32,7 +32,7 @@ When a database user creates objects (such as tables) without a dedicated schema
 To add the `autoCreateUserSchema` annotation to a specific PostgreSQL cluster, use the following command:
 
 ```bash
-kubectl annotate -n prod-db postgrescluster <cluster-name> \
+kubectl annotate -n db-ns postgrescluster <cluster-name> \
   postgres-operator.crunchydata.com/autoCreateUserSchema=true
 ```
 
@@ -40,10 +40,10 @@ Replace `<cluster-name>` with the name of your PostgreSQL cluster (e.g., `dpdcbi
 
 ### 2. For All Clusters
 
-To add the annotation to all PostgreSQL clusters in the `prod-db` namespace, run:
+To add the annotation to all PostgreSQL clusters in the `db-ns` namespace, run:
 
 ```bash
-kubectl get postgrescluster -n prod-db -o name | xargs -I {} kubectl annotate -n prod-db {} postgres-operator.crunchydata.com/autoCreateUserSchema=true --overwrite
+kubectl get postgrescluster -n db-ns -o name | xargs -I {} kubectl annotate -n db-ns {} postgres-operator.crunchydata.com/autoCreateUserSchema=true --overwrite
 ```
 
 This command retrieves all clusters and applies the annotation to each one.
@@ -57,7 +57,7 @@ apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
   name: <cluster-name>
-  namespace: prod-db
+  namespace: db-ns
   annotations:
     postgres-operator.crunchydata.com/autoCreateUserSchema: "true"
 spec:
@@ -73,16 +73,16 @@ Make sure to replace `<cluster-name>` with the name of your cluster. This config
 To remove the `autoCreateUserSchema` annotation from a specific PostgreSQL cluster, use:
 
 ```bash
-kubectl annotate -n prod-db postgrescluster <cluster-name> \
+kubectl annotate -n db-ns postgrescluster <cluster-name> \
   postgres-operator.crunchydata.com/autoCreateUserSchema-
 ```
 
 ### 2. From All Clusters
 
-To remove the annotation from all PostgreSQL clusters in the `prod-db` namespace, run:
+To remove the annotation from all PostgreSQL clusters in the `db-ns` namespace, run:
 
 ```bash
-kubectl get postgrescluster -n prod-db -o name | xargs -I {} kubectl annotate -n prod-db {} postgres-operator.crunchydata.com/autoCreateUserSchema-
+kubectl get postgrescluster -n db-ns -o name | xargs -I {} kubectl annotate -n db-ns {} postgres-operator.crunchydata.com/autoCreateUserSchema-
 ```
 
 ## Verification
@@ -90,7 +90,7 @@ kubectl get postgrescluster -n prod-db -o name | xargs -I {} kubectl annotate -n
 To verify the current annotations on your PostgreSQL clusters, you can execute:
 
 ```bash
-kubectl get postgresclusters -n prod-db -o=jsonpath='{range .items[*]}{.metadata.name}: {.metadata.annotations.postgres-operator\.crunchydata\.com/autoCreateUserSchema}{"\n"}{end}'
+kubectl get postgresclusters -n db-ns -o=jsonpath='{range .items[*]}{.metadata.name}: {.metadata.annotations.postgres-operator\.crunchydata\.com/autoCreateUserSchema}{"\n"}{end}'
 ```
 
 This command will display the annotations for all clusters, allowing you to confirm whether the `autoCreateUserSchema` annotation has been added or removed successfully.

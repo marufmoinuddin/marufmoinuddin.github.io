@@ -60,7 +60,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: alice-pdb
-  namespace: prod-db
+  namespace: db-ns
 spec:
   minAvailable: 2
   selector:

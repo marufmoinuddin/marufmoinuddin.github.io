@@ -146,27 +146,27 @@ Create the namespace and deploy your PostgreSQL cluster.
 #### Commands
 
 ```bash
-# Create the prod-db namespace
-kubectl create ns prod-db
+# Create the db-ns namespace
+kubectl create ns db-ns
 
 # Create a directory for your cluster configuration
-mkdir amexpg-k8s/
+mkdir mydatabase-k8s/
 
-# Save the following YAML configuration to a file named amexpg-13-demo.yaml
-cat <<EOF > amexpg-13-demo.yaml
+# Save the following YAML configuration to a file named mydatabase-13-demo.yaml
+cat <<EOF > mydatabase-13-demo.yaml
 apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
-  name: amexpg
-  namespace: prod-db
+  name: mydatabase
+  namespace: db-ns
   labels:
-    pg-cluster: amexpg
+    pg-cluster: mydatabase
     pgo-version: 5.6.7
 spec:
   image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-13.8-1
   postgresVersion: 13
   instances:
-  - name: amexpg
+  - name: mydatabase
     replicas: 1
     dataVolumeClaimSpec:
       accessModes: ["ReadWriteOnce"]
@@ -198,8 +198,8 @@ spec:
       exporter:
         image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-15.7-1
   users:
-  - name: amexpguser
-    databases: [amexpgdb]
+  - name: mydatabaseuser
+    databases: [mydb]
   patroni:
     dynamicConfiguration:
       postgresql:
@@ -225,14 +225,14 @@ spec:
 EOF
 
 # Apply the YAML configuration to create the PostgreSQL cluster
-kubectl apply -f amexpg-13-demo.yaml
+kubectl apply -f mydatabase-13-demo.yaml
 ```
 
 #### Explanation
 
-- `kubectl create ns prod-db`: Creates a new namespace named `prod-db`.
-- `mkdir amexpg-k8s/`: Creates a directory for the PostgreSQL cluster configuration.
-- `cat <<EOF > amexpg-13-demo.yaml ... EOF`: Saves the PostgreSQL cluster configuration to a file named `amexpg-13-demo.yaml`.
-- `kubectl apply -f amexpg-13-demo.yaml`: Applies the configuration to create the PostgreSQL cluster.
+- `kubectl create ns db-ns`: Creates a new namespace named `db-ns`.
+- `mkdir mydatabase-k8s/`: Creates a directory for the PostgreSQL cluster configuration.
+- `cat <<EOF > mydatabase-13-demo.yaml ... EOF`: Saves the PostgreSQL cluster configuration to a file named `mydatabase-13-demo.yaml`.
+- `kubectl apply -f mydatabase-13-demo.yaml`: Applies the configuration to create the PostgreSQL cluster.
 
 By following these detailed steps, you can set up a Kubernetes 29 cluster with Crunchy PGO 5.6.7, install necessary components, and deploy a PostgreSQL cluster.

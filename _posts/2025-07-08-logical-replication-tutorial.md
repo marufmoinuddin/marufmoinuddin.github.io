@@ -33,10 +33,10 @@ First, we need to export the schema from the old master PostgreSQL cluster.
 
 ### Command
 ```bash
-kubectl exec -it -n prod-db -c database $(kubectl get pods -n prod-db --selector='postgres-operator.crunchydata.com/cluster=amexpg,postgres-operator.crunchydata.com/role=master' -o jsonpath='{.items[0].metadata.name}') -- pg_dump -s -U postgres -d amexpgdb -f /tmp/amexpg_schema_bkp_old.sql
+kubectl exec -it -n db-ns -c database $(kubectl get pods -n db-ns --selector='postgres-operator.crunchydata.com/cluster=mydatabase,postgres-operator.crunchydata.com/role=master' -o jsonpath='{.items[0].metadata.name}') -- pg_dump -s -U postgres -d mydb -f /tmp/mydatabase_schema_bkp_old.sql
 ```
 
-**Explanation:** This command runs `pg_dump` inside the old master pod to export the schema (`-s`) of the `amexpgdb` database to a file `/tmp/amexpg_schema_bkp_old.sql`.
+**Explanation:** This command runs `pg_dump` inside the old master pod to export the schema (`-s`) of the `mydb` database to a file `/tmp/mydatabase_schema_bkp_old.sql`.
 
 ## Step 2: Copy Schema Backup to Local Machine
 
@@ -46,12 +46,12 @@ Next, copy the schema backup file from the pod to your local machine.
 
 1. **Set the Old Master Pod Variable:**
    ```bash
-   OLD_MASTER_POD=$(kubectl get pods -n prod-db --selector='postgres-operator.crunchydata.com/cluster=amexpg,postgres-operator.crunchydata.com/role=master' -o jsonpath='{.items[0].metadata.name}')
+   OLD_MASTER_POD=$(kubectl get pods -n db-ns --selector='postgres-operator.crunchydata.com/cluster=mydatabase,postgres-operator.crunchydata.com/role=master' -o jsonpath='{.items[0].metadata.name}')
    ```
 
 2. **Copy the File from the Pod to Your Local Machine:**
    ```bash
-   kubectl cp prod-db/$OLD_MASTER_POD:/tmp/amexpg_schema_bkp_old.sql /tmp/amexpg_schema_bkp_old.sql
+   kubectl cp db-ns/$OLD_MASTER_POD:/tmp/mydatabase_schema_bkp_old.sql /tmp/mydatabase_schema_bkp_old.sql
    ```
 
 **Explanation:** The `kubectl cp` command copies the backup file from the old master pod to your local machine, which is necessary for restoring the schema on the new master.
@@ -74,12 +74,12 @@ max_wal_senders = 4
 
 1. **Set the New Master Pod Variable:**
    ```bash
-   NEW_MASTER_POD=$(kubectl get pods -n prod-db --selector='postgres-operator.crunchydata.com/cluster=amexpg-new,postgres-operator.crunchydata.com/role=master' -o jsonpath='{.items[0].metadata.name}')
+   NEW_MASTER_POD=$(kubectl get pods -n db-ns --selector='postgres-operator.crunchydata.com/cluster=mydatabase-new,postgres-operator.crunchydata.com/role=master' -o jsonpath='{.items[0].metadata.name}')
    ```
 
 2. **Copy the File to the New Master Pod:**
    ```bash
-   kubectl cp /tmp/amexpg_schema_bkp_old.sql prod-db/$NEW_MASTER_POD:/tmp/amexpg_schema_bkp_old.sql
+   kubectl cp /tmp/mydatabase_schema_bkp_old.sql db-ns/$NEW_MASTER_POD:/tmp/mydatabase_schema_bkp_old.sql
    ```
 
 **Explanation:** This command uploads the schema backup file to the new master pod where it can be restored.
@@ -90,7 +90,7 @@ Restore the schema on the new master PostgreSQL cluster.
 
 ### Command
 ```bash
-kubectl exec -it -n prod-db -c database $NEW_MASTER_POD -- psql -U postgres -d amexpgdb -f /tmp/amexpg_schema_bkp_old.sql
+kubectl exec -it -n db-ns -c database $NEW_MASTER_POD -- psql -U postgres -d mydb -f /tmp/mydatabase_schema_bkp_old.sql
 ```
 
 **Explanation:** This command restores the schema from the backup file to the new master database. If there are errors related to missing roles, you may need to manually create these roles.
@@ -109,9 +109,9 @@ Add the following section under `spec` in the old master's YAML configuration:
 
 ```yaml
 users:
-  - name: amexpguser
+  - name: mydatabaseuser
     databases:
-      - amexpgdb
+      - mydb
     options: "REPLICATION"
 ```
 
@@ -119,13 +119,13 @@ Log into the old master PostgreSQL cluster and create a publication.
 
 ### Commands
 ```bash
-   bash -c 'kubectl exec -it -n prod-db -c database \
-  $(kubectl get pods -n prod-db --selector='postgres-operator.crunchydata.com/cluster=amexpg,postgres-operator.crunchydata.com/role=master' -o name) -- psql amexpgdb'
+   bash -c 'kubectl exec -it -n db-ns -c database \
+  $(kubectl get pods -n db-ns --selector='postgres-operator.crunchydata.com/cluster=mydatabase,postgres-operator.crunchydata.com/role=master' -o name) -- psql mydb'
 ```
 
 Run this inside the PostgreSQL session:
 ```sql
-CREATE PUBLICATION amexpg_pub FOR ALL TABLES;
+CREATE PUBLICATION mydatabase_pub FOR ALL TABLES;
 \q
 ```
 **Explanation:** This command creates a publication on the old master, which will send changes to the new master.
@@ -137,14 +137,14 @@ Log into the old master PostgreSQL cluster and create a publication.
 
 ### Commands
 ```bash
-   bash -c 'kubectl exec -it -n prod-db -c database \
-  $(kubectl get pods -n prod-db --selector='postgres-operator.crunchydata.com/cluster=amexpg,postgres-operator.crunchydata.com/role=master' -o name) -- psql amexpgdb'
+   bash -c 'kubectl exec -it -n db-ns -c database \
+  $(kubectl get pods -n db-ns --selector='postgres-operator.crunchydata.com/cluster=mydatabase,postgres-operator.crunchydata.com/role=master' -o name) -- psql mydb'
 ```
 
 Run this inside the PostgreSQL session:
 ```sql
-ALTER ROLE amexpguser WITH REPLICATION;
-CREATE PUBLICATION amexpg_pub FOR ALL TABLES;
+ALTER ROLE mydatabaseuser WITH REPLICATION;
+CREATE PUBLICATION mydatabase_pub FOR ALL TABLES;
 
 ```
 
@@ -159,29 +159,29 @@ Get the connection information for the old master and create a subscription on t
 
 1. **Get Connection Information:**
    ```bash
-   kubectl -n prod-db get secrets amexpg-pguser-amexpguser -o jsonpath={.data.host} | base64 -d 
+   kubectl -n db-ns get secrets mydatabase-pguser-mydatabaseuser -o jsonpath={.data.host} | base64 -d 
    echo
-   kubectl -n prod-db get secrets amexpg-pguser-amexpguser -o jsonpath={.data.user} | base64 -d 
+   kubectl -n db-ns get secrets mydatabase-pguser-mydatabaseuser -o jsonpath={.data.user} | base64 -d 
    echo
-   kubectl -n prod-db get secrets amexpg-pguser-amexpguser -o jsonpath={.data.password} | base64 -d 
+   kubectl -n db-ns get secrets mydatabase-pguser-mydatabaseuser -o jsonpath={.data.password} | base64 -d 
    echo
    ```
 
 2. **Create Subscription:**
    ```bash
-   bash -c 'kubectl exec -it -n prod-db -c database \
-   $(kubectl get pods -n prod-db --selector='postgres-operator.crunchydata.com/cluster=amexpg-new,postgres-operator.crunchydata.com/role=master' -o name) -- psql amexpgdb'
+   bash -c 'kubectl exec -it -n db-ns -c database \
+   $(kubectl get pods -n db-ns --selector='postgres-operator.crunchydata.com/cluster=mydatabase-new,postgres-operator.crunchydata.com/role=master' -o name) -- psql mydb'
    ```
 
    Inside the PostgreSQL session:
    ```sql
-   CREATE SUBSCRIPTION amexpg_sub CONNECTION 'host=<REDACTED_IP> port=<REDACTED_PORT> user=<REDACTED_USERNAME> dbname=amexpgdb password=<REDACTED_PASSWORD>' PUBLICATION amexpg_pub;
+   CREATE SUBSCRIPTION mydatabase_sub CONNECTION 'host=<REDACTED_IP> port=<REDACTED_PORT> user=<REDACTED_USERNAME> dbname=mydb password=<REDACTED_PASSWORD>' PUBLICATION mydatabase_pub;
    ```
 
 **Explanation:** This sets up a subscription on the new master to receive changes from the publication created on the old master.
 
 >Note: Replace `<OLD_MASTER_HOST>` with the IP address, `<OLD_MASTER_EXPOSED_PORT>` with the exposed port, `<OLD_MASTER_USER>` with the db replication user (you must make the schema user as replication user) and `<OLD_MASTER_PASSWORD>` with the password you have. 
->Note: If you dont want to edit the yaml, enter to your pod  `ALTER ROLE amexpguser WITH REPLICATION;`
+>Note: If you dont want to edit the yaml, enter to your pod  `ALTER ROLE mydatabaseuser WITH REPLICATION;`
 
 ## Step 7: Verify Replication
 
@@ -189,7 +189,7 @@ Ensure that data is being replicated from the old master to the new master.
 
 ### Insert Record on Old Master
 ```sql
-INSERT INTO amexpguser.ecommerce_payment_ecommercepaymentaddmoney (
+INSERT INTO mydatabaseuser.ecommerce_payment_ecommercepaymentaddmoney (
     id, to_wallet, to_wallet_id, amount, currency, source, description, 
     initiated_by, trx_id, batch_id, order_id, session_id, create_order_url, 
     status, medium, initiated_at, completed_at, card_number, card_brand, 
@@ -206,7 +206,7 @@ INSERT INTO amexpguser.ecommerce_payment_ecommercepaymentaddmoney (
 
 ### Verify on New Master
 ```sql
-SELECT * FROM amexpguser.ecommerce_payment_ecommercepaymentaddmoney 
+SELECT * FROM mydatabaseuser.ecommerce_payment_ecommercepaymentaddmoney 
 WHERE id = '5f6d52b6-0a22-44b8-8c4c-fbde9e2b38b8';
 ```
 
@@ -239,33 +239,33 @@ In a PostgreSQL environment, you encountered issues with managing a replication 
 1. **Subscription and Replication Slot Details:**
    - **Old Master Logs:**
      ```
-     2024-09-06 15:38:06,638 INFO: Lock owner: amexpg-5c7875bf8d-zppgg; I am amexpg-5c7875bf8d-zppgg
+     2024-09-06 15:38:06,638 INFO: Lock owner: mydatabase-5c7875bf8d-zppgg; I am mydatabase-5c7875bf8d-zppgg
      2024-09-06 15:38:06,649 INFO: no action.  i am the leader with the lock
-     2024-09-06 15:38:09.855 UTC [24782] ERROR:  replication slot "amexpg_sub" does not exist
-     2024-09-06 15:38:14.890 UTC [24800] ERROR:  replication slot "amexpg_sub" does not exist
+     2024-09-06 15:38:09.855 UTC [24782] ERROR:  replication slot "mydatabase_sub" does not exist
+     2024-09-06 15:38:14.890 UTC [24800] ERROR:  replication slot "mydatabase_sub" does not exist
      ```
 
    - **New Master Logs:**
      ```
-     postgres=# \c amexpgdb 
-     You are now connected to database "amexpgdb" as user "postgres".
-     amexpgdb=# select * from pg_subscription;
+     postgres=# \c mydb 
+     You are now connected to database "mydb" as user "postgres".
+     mydb=# select * from pg_subscription;
        oid  | subdbid |  subname   | subowner | subenabled |                                         subconninfo                                          | subslotname | subsynccommit | subpublications 
      -------+---------+------------+----------+------------+----------------------------------------------------------------------------------------------+-------------+---------------+-----------------
-       16801 |   16406 | amexpg_sub |       10 | t          | host=<REDACTED_IP> port=<REDACTED_PORT> user=<REDACTED_USERNAME> dbname=amexpgdb password=<REDACTED_PASSWORD> | amexpg_sub  | off           | {amexpg_pub}
+       16801 |   16406 | mydatabase_sub |       10 | t          | host=<REDACTED_IP> port=<REDACTED_PORT> user=<REDACTED_USERNAME> dbname=mydb password=<REDACTED_PASSWORD> | mydatabase_sub  | off           | {mydatabase_pub}
      (1 row)
      
-     amexpgdb=# drop subscription amexpg_sub;
-     ERROR:  could not drop the replication slot "amexpg_sub" on publisher
-     DETAIL:  The error was: ERROR:  replication slot "amexpg_sub" does not exist
+     mydb=# drop subscription mydatabase_sub;
+     ERROR:  could not drop the replication slot "mydatabase_sub" on publisher
+     DETAIL:  The error was: ERROR:  replication slot "mydatabase_sub" does not exist
      ```
 
 2. **Troubleshooting Steps Taken:**
    - **Direct Query Attempts:**
      ```sql
-     amexpgdb=# DELETE FROM pg_subscription WHERE subname = 'amexpg_sub';
+     mydb=# DELETE FROM pg_subscription WHERE subname = 'mydatabase_sub';
      DELETE 1
-     amexpgdb=# SELECT * FROM pg_subscription;
+     mydb=# SELECT * FROM pg_subscription;
       oid | subdbid | subname | subowner | subenabled | subconninfo | subslotname | subsynccommit | subpublications 
      -----+---------+---------+----------+------------+-------------+-------------+---------------+-----------------
      (0 rows)
@@ -274,7 +274,7 @@ In a PostgreSQL environment, you encountered issues with managing a replication 
 #### Troubleshooting Steps and Resolutions
 
 1. **Verify Replication Slot Existence:**
-   - On the old master, check if the replication slot `amexpg_sub` still exists. This can be done by querying the `pg_replication_slots` view:
+   - On the old master, check if the replication slot `mydatabase_sub` still exists. This can be done by querying the `pg_replication_slots` view:
      ```sql
      SELECT * FROM pg_replication_slots;
      ```
@@ -285,7 +285,7 @@ In a PostgreSQL environment, you encountered issues with managing a replication 
    - Since the `pg_subscription` table entry was successfully removed, verify that there are no remnants of the subscription in other related catalog tables such as `pg_publication` if you plan to clean up completely:
      ```sql
      SELECT * FROM pg_publication;
-     DELETE FROM pg_publication WHERE pubname = 'amexpg_pub';
+     DELETE FROM pg_publication WHERE pubname = 'mydatabase_pub';
      ```
 
 3. **Check for Subscription and Slot Cleanup on New Master:**

@@ -45,7 +45,7 @@ To address replication lag, one effective method is to reinitialize a lagging re
 2. **Reinitialize the Lagging Replica**: Once the new replica is ready, execute the following command on the old replica that is experiencing lag:
 
    ```bash
-   kubectl exec -it txne-cluster-5qhz-0 -n prod-db -- patronictl reinit txne-ha txne-cluster-5qhz-0 --force
+   kubectl exec -it txne-cluster-5qhz-0 -n db-ns -- patronictl reinit txne-ha txne-cluster-5qhz-0 --force
    ```
 
    - **`txne-cluster-5qhz-0`**: This is the identifier of the lagging replica.

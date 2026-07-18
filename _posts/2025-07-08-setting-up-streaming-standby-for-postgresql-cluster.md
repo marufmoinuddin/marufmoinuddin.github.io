@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Setting Up Streaming Standby for PGO CrunchyPostgreSQL Cluster
+title: Setting Up Streaming Standby for PGO Crunchy PostgreSQL Cluster
 date: 2025-07-08
 category: PostgreSQL
 tags: [kubernetes, postgresql, streaming-replication]
@@ -65,7 +65,7 @@ mkdir keys && cd keys
 #### Create a Certificate Authority (CA) Certificate
 ```bash
 openssl genrsa -out ca.key 4096
-openssl req -new -x509 -key ca.key -out ca.crt -days 365 -subj "/CN=amexpg-ca"
+openssl req -new -x509 -key ca.key -out ca.crt -days 365 -subj "/CN=mydatabase-ca"
 ```
 - Generates a root certificate authority key and certificate
 - Valid for 365 days
@@ -73,18 +73,18 @@ openssl req -new -x509 -key ca.key -out ca.crt -days 365 -subj "/CN=amexpg-ca"
 
 #### Create a Server Certificate for Primary Cluster
 ```bash
-openssl genrsa -out amexpg-server.key 4096
-openssl req -new -key amexpg-server.key -out amexpg-server.csr -subj "/CN=amexpg-primary"
-openssl x509 -req -in amexpg-server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out amexpg-server.crt -days 365
+openssl genrsa -out mydatabase-server.key 4096
+openssl req -new -key mydatabase-server.key -out mydatabase-server.csr -subj "/CN=mydatabase-primary"
+openssl x509 -req -in mydatabase-server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out mydatabase-server.crt -days 365
 ```
 - Generates a unique server certificate for the primary cluster
 - Signed by the CA certificate for added security
 
 #### Create a Replication Certificate
 ```bash
-openssl genrsa -out amexpg-repl.key 4096
-openssl req -new -key amexpg-repl.key -out amexpg-repl.csr -subj "/CN=_crunchyrepl"
-openssl x509 -req -in amexpg-repl.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out amexpg-repl.crt -days 365
+openssl genrsa -out mydatabase-repl.key 4096
+openssl req -new -key mydatabase-repl.key -out mydatabase-repl.csr -subj "/CN=_crunchyrepl"
+openssl x509 -req -in mydatabase-repl.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out mydatabase-repl.crt -days 365
 ```
 - Specifically for secure replication communication
 - Also signed by the CA certificate
@@ -102,18 +102,18 @@ openssl x509 -req -in amexpg-repl.csr -CA ca.crt -CAkey ca.key -CAcreateserial -
 
 #### Create Primary Cluster TLS Secret
 ```bash
-kubectl create secret generic -n prod-db amexpg-cluster.tls \
+kubectl create secret generic -n db-ns mydatabase-cluster.tls \
   --from-file=ca.crt=ca.crt \
-  --from-file=tls.key=amexpg-server.key \
-  --from-file=tls.crt=amexpg-server.crt
+  --from-file=tls.key=mydatabase-server.key \
+  --from-file=tls.crt=mydatabase-server.crt
 ```
 
 #### Create Replication TLS Secret
 ```bash
-kubectl create secret generic -n prod-db amexpg-replication.tls \
+kubectl create secret generic -n db-ns mydatabase-replication.tls \
   --from-file=ca.crt=ca.crt \
-  --from-file=tls.key=amexpg-repl.key \
-  --from-file=tls.crt=amexpg-repl.crt
+  --from-file=tls.key=mydatabase-repl.key \
+  --from-file=tls.crt=mydatabase-repl.crt
 ```
 
 ## Step 3: Configure Primary Cluster
@@ -124,9 +124,9 @@ Add TLS secret references to your PostgreSQL cluster configuration:
 ```yaml
 spec:
   customTLSSecret:
-    name: amexpg-cluster.tls
+    name: mydatabase-cluster.tls
   customReplicationTLSSecret:
-    name: amexpg-replication.tls
+    name: mydatabase-replication.tls
 ```
 
 Here is the full yaml file:
@@ -136,10 +136,10 @@ Here is the full yaml file:
 apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
-  name: amexpg
-  namespace: prod-db
+  name: mydatabase
+  namespace: db-ns
   labels:
-    pg-cluster: amexpg
+    pg-cluster: mydatabase
     pgo-version: 5.6.7
 spec:
   #image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-15.7-1
@@ -147,7 +147,7 @@ spec:
   image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-13.8-1
   postgresVersion: 13
   instances:
-  - name: amexpg
+  - name: mydatabase
     replicas: 1
     dataVolumeClaimSpec:
       accessModes: ["ReadWriteOnce"]
@@ -180,12 +180,12 @@ spec:
       exporter:
         image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-15.7-1
   users:
-  - name: amexpguser
-    databases: [amexpgdb]
+  - name: mydatabaseuser
+    databases: [mydb]
   customTLSSecret:
-    name: amexpg-cluster.tls
+    name: mydatabase-cluster.tls
   customReplicationTLSSecret:
-    name: amexpg-replication.tls
+    name: mydatabase-replication.tls
   patroni:
     dynamicConfiguration:
       postgresql:
@@ -217,14 +217,14 @@ spec:
 - Assigns a high-numbered port accessible from outside the cluster
 
 ```bash
-kubectl expose svc amexpg-ha --port=5432 --target-port=5432 \
-  --name=amexpg-ha-nodeport --type=NodePort \
-  --selector=postgres-operator.crunchydata.com/patroni=amexpg-ha -n prod-db
+kubectl expose svc mydatabase-ha --port=5432 --target-port=5432 \
+  --name=mydatabase-ha-nodeport --type=NodePort \
+  --selector=postgres-operator.crunchydata.com/patroni=mydatabase-ha -n db-ns
 ```
 
 #### Verify the Service
 ```bash
-kubectl get svc amexpg-ha-nodeport -n prod-db
+kubectl get svc mydatabase-ha-nodeport -n db-ns
 ```
 
 ## Step 5: Configure Standby Cluster
@@ -235,9 +235,9 @@ Key configuration elements for the standby cluster:
 ```yaml
 spec:
   customTLSSecret:
-    name: amexpg-cluster.tls
+    name: mydatabase-cluster.tls
   customReplicationTLSSecret:
-    name: amexpg-replication.tls
+    name: mydatabase-replication.tls
   standby:
     enabled: true
     host: <REDACTED_IP>  # Primary cluster's IP
@@ -251,16 +251,16 @@ Here is the full yaml file:
 apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
-  name: amexpg-standby
-  namespace: prod-db
+  name: mydatabase-standby
+  namespace: db-ns
   labels:
-    pg-cluster: amexpg
+    pg-cluster: mydatabase
     pgo-version: 5.6.7
 spec:
   image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-13.8-1
   postgresVersion: 13
   instances:
-  - name: amexpg-standby
+  - name: mydatabase-standby
     replicas: 1
     dataVolumeClaimSpec:
       accessModes: ["ReadWriteOnce"]
@@ -292,16 +292,16 @@ spec:
       exporter:
         image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-15.7-1
   customTLSSecret:
-    name: amexpg-cluster.tls
+    name: mydatabase-cluster.tls
   customReplicationTLSSecret:
-    name: amexpg-replication.tls
+    name: mydatabase-replication.tls
   standby:
     enabled: true
     host: <A node IP>
     port: <Exposed NodePort>
   users:
-  - name: amexpguser
-    databases: [amexpgdb]
+  - name: mydatabaseuser
+    databases: [mydb]
   patroni:
     dynamicConfiguration:
       postgresql:
@@ -330,19 +330,19 @@ spec:
 
 ### Deployment
 ```bash
-kubectl apply -f amexpg-standby.yaml
+kubectl apply -f mydatabase-standby.yaml
 ```
 
 ### Verification Steps
 
 #### Check Pod Status
 ```bash
-kubectl get pods -n prod-db
+kubectl get pods -n db-ns
 ```
 
 #### Review Replication Logs
 ```bash
-kubectl logs <standby-pod-name> -n prod-db
+kubectl logs <standby-pod-name> -n db-ns
 ```
 
 ## Troubleshooting

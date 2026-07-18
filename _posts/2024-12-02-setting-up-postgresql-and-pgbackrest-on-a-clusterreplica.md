@@ -1,10 +1,10 @@
 ---
 layout: post
-title: Setting Up PostgreSQL and pgBackRest on a ClusterReplica
+title: Setting Up PostgreSQL and pgBackRest as a Readonly database in a replica where archived databases are actively restored and made live on different ports
 date: 2024-12-02
 category: PostgreSQL
 tags: [pgbackrest, postgresql, rsync]
-excerpt: This guide will help you set up PostgreSQL (Percona-PostgreSQL-13) and pgBackRest (Percona-pgBackRest) on a machine (clusterreplica) to restore archived databases and make them live on different ports. We will cover…
+excerpt: This guide will help you set up PostgreSQL (Percona-PostgreSQL-13) and pgBackRest (Percona-pgBackRest) on a machine (clusterreplica) to restore archived databases and make them live on different ports. We will cover the installation process and provide a script to automate the setup for multiple clusters.
 read_time: 2
 source_doc: pg-docs/pg13-pgbackrest-clusterreplica.md
 draft_import: true
@@ -15,7 +15,9 @@ draft_import: true
 This guide will help you set up PostgreSQL (Percona-PostgreSQL-13) and pgBackRest (Percona-pgBackRest) on a machine (clusterreplica) to restore archived databases and make them live on different ports. We will cover the installation process and provide a script to automate the setup for multiple clusters.
 
 ### Prerequisites
-- A cluster of machines with archived databases which are stored on `clusterreplica` node under `/postgres/rsyncbackrest/production/{cluster_name}`.
+- A cluster of machines with archived databases which are stored on `clusterreplica` node under `/postgres/rsyncbackrest/production/{cluster_name}` and actively restored and made live on different ports.
+- Ensure that the `clusterreplica` machine has sufficient disk space and resources to handle multiple PostgreSQL instances.
+- Basic knowledge of Linux command line and PostgreSQL administration.
 
 ### Installation Steps
 

@@ -4,7 +4,7 @@ title: PostgreSQL High-Availability Cluster Deployment Guide
 date: 2025-07-08
 category: PostgreSQL
 tags: [backup, ceph, high-availability, kubernetes, linux, pgbackrest, postgresql, prometheus]
-excerpt: "This comprehensive guide provides end-to-end instructions for deploying a resilient PostgreSQL cluster using the Crunchy Data PostgreSQL Operator on Kubernetes. The solution integrates high availability, automated…"
+excerpt: "This comprehensive guide provides end-to-end instructions for deploying a resilient PostgreSQL cluster using the Crunchy Data PostgreSQL Operator on Kubernetes. The solution integrates high availability, automated backups, performance optimization, and robust monitoring to ensure enterprise-grade database operations."
 read_time: 7
 source_doc: 36_UCB_Databases_Overview.md
 draft_import: true
@@ -82,14 +82,14 @@ This is a customized deployment configuration for the PostgreSQL cluster. It inc
 
 ### 4.1 Namespace Setup
 ```bash
-kubectl create ns ucbdb
+kubectl create ns db-ns
 ```
 
 ### 4.2 Cluster Manifest (YAML)
-Create `uclickbackend.yaml` with the following configuration:
+Create `mydatabase.yaml` with the following configuration:
 
 ```bash
-  cat <<EOF > uclickbackend.yaml
+  cat <<EOF > mydatabase.yaml
   #===============================================================================================
   # PostgreSQL Cluster Configuration using Crunchy Data PostgreSQL Operator
   #===============================================================================================
@@ -98,11 +98,11 @@ Create `uclickbackend.yaml` with the following configuration:
   apiVersion: v1
   kind: Secret
   metadata:
-    name: uclickbackenduser-secret
-    namespace: ucbdb
+    name: mydatabaseuser-secret
+    namespace: db-ns
     labels:
-      postgres-operator.crunchydata.com/cluster: uclickbackend
-      postgres-operator.crunchydata.com/pguser: uclickbackenduser
+      postgres-operator.crunchydata.com/cluster: mydatabase
+      postgres-operator.crunchydata.com/pguser: mydatabaseuser
   data:
     password: <your-base64-encoded-password-here>
   type: Opaque
@@ -111,8 +111,8 @@ Create `uclickbackend.yaml` with the following configuration:
   apiVersion: postgres-operator.crunchydata.com/v1beta1
   kind: PostgresCluster
   metadata:
-    name: uclickbackend
-    namespace: ucbdb
+    name: mydatabase
+    namespace: db-ns
     annotations:
       postgres-operator.crunchydata.com/autoCreateUserSchema: "true"
   spec:
@@ -135,7 +135,7 @@ Create `uclickbackend.yaml` with the following configuration:
             requiredDuringSchedulingIgnoredDuringExecution:
               - labelSelector:
                   matchLabels:
-                    postgres-operator.crunchydata.com/cluster: uclickbackend
+                    postgres-operator.crunchydata.com/cluster: mydatabase
                     postgres-operator.crunchydata.com/instance-set: cluster
                 topologyKey: kubernetes.io/hostname
           nodeAffinity:
@@ -202,8 +202,8 @@ Create `uclickbackend.yaml` with the following configuration:
 
     # Database User Creation
     users:
-      - name: uclickbackenduser
-        databases: [uclickbackenddb]
+      - name: mydatabaseuser
+        databases: [mydatabasedb]
 
     # Backup Configuration with pgBackRest
     backups:
@@ -260,7 +260,7 @@ Create `uclickbackend.yaml` with the following configuration:
 
 ### 4.3 Cluster Deployment
 ```bash
-kubectl apply -f uclickbackend.yaml
+kubectl apply -f mydatabase.yaml
 ```
 
 ---
@@ -313,7 +313,7 @@ This section covers the operational aspects of the PostgreSQL cluster, including
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchLabels:
-                postgres-operator.crunchydata.com/cluster: uclickbackend
+                postgres-operator.crunchydata.com/cluster: mydatabase
                 postgres-operator.crunchydata.com/instance-set: cluster
             topologyKey: kubernetes.io/hostname
         nodeAffinity:
@@ -386,7 +386,7 @@ This section outlines the disaster recovery procedures for the PostgreSQL cluste
 
 ### 8.2 From Backup Recovery
 ```bash
-kubectl-pgo restore -n ucbdb uclickbackend --repoName repo1
+kubectl-pgo restore -n db-ns mydatabase --repoName repo1
 ```
 ---
 
@@ -396,12 +396,12 @@ After deploying the PostgreSQL cluster, perform the following validation steps t
 
 1. Verify cluster status:
    ```bash
-   kubectl -n ucbdb get postgresclusters
+   kubectl -n db-ns get postgresclusters
    ```
 
 2. Validate backup completion:
    ```bash
-   kubectl-pgo show backup -n ucbdb uclickbackend
+   kubectl-pgo show backup -n db-ns mydatabase
    ```
 
 3. Configure Prometheus scraping targets
