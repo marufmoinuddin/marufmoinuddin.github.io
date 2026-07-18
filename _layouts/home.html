@@ -18,6 +18,46 @@ layout: default
   </div>
 </section>
 
+<!-- Featured posts slideshow -->
+{% assign featured_posts = site.posts | sample:5 %}
+{% if featured_posts.size > 0 %}
+<section class="section section-featured">
+  <div class="container narrow">
+    <div class="section-head">
+      <h2 class="section-title">Featured</h2>
+    </div>
+    <div class="featured-slideshow" id="featuredSlideshow">
+      <div class="slideshow-track" id="slideshowTrack">
+        {% for post in featured_posts %}
+        <div class="slideshow-slide" data-index="{{ forloop.index0 }}">
+          <div class="slideshow-card">
+            <span class="slideshow-count">{{ forloop.index }} of {{ featured_posts.size }}</span>
+            <span class="slideshow-category">{{ post.category }}</span>
+            <h3 class="slideshow-title">
+              <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+            </h3>
+            <p class="slideshow-excerpt">{{ post.excerpt | strip_html | truncate: 180 }}</p>
+            <div class="slideshow-meta">
+              <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %d, %Y" }}</time>
+              {% if post.read_time %}
+              <span class="meta-sep">·</span>
+              <span>{{ post.read_time }} min read</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="slideshow-dots" id="slideshowDots">
+        {% for post in featured_posts %}
+        <button class="slideshow-dot{% if forloop.first %} active{% endif %}" data-index="{{ forloop.index0 }}" aria-label="Go to slide {{ forloop.index }}"></button>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <!-- Latest posts -->
 <section class="section">
   <div class="container narrow">

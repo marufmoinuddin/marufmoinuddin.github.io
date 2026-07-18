@@ -460,6 +460,124 @@ a.btn-ghost:hover {
   gap: 0.75rem;
 }
 
+/* --- Featured slideshow --- */
+.section-featured {
+  padding: 3rem 0 2rem;
+}
+
+.featured-slideshow {
+  position: relative;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.slideshow-track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.slideshow-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  padding: 2rem 2rem 2.5rem;
+}
+
+.slideshow-card {
+  max-width: 100%;
+}
+
+.slideshow-count {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  margin-bottom: 0.5rem;
+}
+
+.slideshow-category {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 0.2rem 0.55rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.slideshow-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.45rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 0.65rem 0 0.5rem;
+}
+
+.slideshow-title a {
+  color: var(--text);
+  text-decoration: none;
+  transition: color var(--ease);
+}
+
+.slideshow-title a:hover {
+  color: var(--accent);
+}
+
+.slideshow-excerpt {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 0.85rem;
+}
+
+.slideshow-meta {
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.slideshow-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 0 1.25rem;
+}
+
+.slideshow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: background var(--ease), border-color var(--ease), transform var(--ease);
+  padding: 0;
+}
+
+.slideshow-dot:hover {
+  border-color: var(--accent);
+  transform: scale(1.25);
+}
+
+.slideshow-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.25);
+}
+
 /* --- Post list (home) --- */
 .post-list {
   display: flex;

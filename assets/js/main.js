@@ -13,6 +13,7 @@
     initThemeToggle();
     initSmoothScroll();
     initBlogFilter();
+    initFeaturedSlideshow();
   });
 
   function initThemeToggle() {
@@ -423,5 +424,65 @@
         post.style.display = match ? '' : 'none';
       });
     });
+  }
+
+  /* --- Featured slideshow --- */
+  function initFeaturedSlideshow() {
+    var track = document.getElementById('slideshowTrack');
+    var dots = document.getElementById('slideshowDots');
+    if (!track || !dots) return;
+
+    var slides = track.querySelectorAll('.slideshow-slide');
+    var dotBtns = dots.querySelectorAll('.slideshow-dot');
+    if (!slides.length) return;
+
+    var current = 0;
+    var interval = 5000; // 5 seconds
+    var timer = null;
+
+    function goTo(index) {
+      track.style.transform = 'translateX(-' + (index * 100) + '%)';
+      dotBtns.forEach(function (d) { d.classList.remove('active'); });
+      dotBtns[index].classList.add('active');
+      current = index;
+    }
+
+    function goNext() {
+      var next = (current + 1) % slides.length;
+      goTo(next);
+    }
+
+    function startTimer() {
+      stopTimer();
+      timer = setInterval(goNext, interval);
+    }
+
+    function stopTimer() {
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    // Show first slide
+    goTo(0);
+    startTimer();
+
+    // Dot click navigation
+    dotBtns.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        var idx = parseInt(this.getAttribute('data-index'), 10);
+        if (idx !== current) {
+          goTo(idx);
+          startTimer(); // reset timer on manual nav
+        }
+      });
+    });
+
+    // Pause on hover / touch
+    var container = document.getElementById('featuredSlideshow');
+    if (container) {
+      container.addEventListener('mouseenter', stopTimer);
+      container.addEventListener('mouseleave', startTimer);
+      container.addEventListener('touchstart', stopTimer, { passive: true });
+      container.addEventListener('touchend', startTimer, { passive: true });
+    }
   }
 })();
