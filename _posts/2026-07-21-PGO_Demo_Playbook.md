@@ -223,8 +223,11 @@ kubectl -n demo-db get secret shopdb-pguser-shopuser -o jsonpath='{.data.passwor
 ### 4.1 Common DBA tasks via psql
 
 ```bash
-kubectl -n demo-db exec -it shopdb-instance1-xxxx-0 -c database -- psql -U shopuser -d shopdb
+kubectl -n demo-db exec -it shopdb-instance1-xxxx-0 -c database -- \
+  psql -h 127.0.0.1 -U shopuser -d shopdb
 ```
+
+**Note:** The `-h 127.0.0.1` flag forces a TCP connection instead of the Unix domain socket. PGO’s generated `pg_hba.conf` does not include a `local` socket entry for application users, so omitting `-h` produces: `no pg_hba.conf entry for host "[local]"`.
 ```sql
 CREATE TABLE products (id serial PRIMARY KEY, name text, price numeric);
 INSERT INTO products (name, price) VALUES ('Demo Widget', 9.99);
