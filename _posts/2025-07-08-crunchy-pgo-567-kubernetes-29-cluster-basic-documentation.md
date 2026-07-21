@@ -1,30 +1,30 @@
 ---
 layout: post
-title: Crunchy PGO 5.6.7 Kubernetes 29 Cluster Basic Documentation
+title: Crunchy PGO 6.0.1 Kubernetes 35 Cluster Basic Documentation
 date: 2025-07-08
 category: Kubernetes
 tags: [ceph, cilium, kubernetes, linux, postgresql, rbd, rook]
-excerpt: "This documentation provides step-by-step instructions for setting up a Kubernetes 29 cluster, installing necessary components such as Cilium, Rook Ceph storage, and Crunchy PGO, and deploying a PostgreSQL cluster."
+excerpt: "This documentation provides step-by-step instructions for setting up a Kubernetes 35 cluster, installing necessary components such as Cilium, Rook Ceph storage, and Crunchy PGO, and deploying a PostgreSQL cluster."
 read_time: 4
 source_doc: 02_PGO_Cluster_Setup.md
 draft_import: true
 ---
-# Crunchy PGO 5.6.7 Kubernetes 29 Cluster Basic Documentation
+# Crunchy PGO 6.0.1 Kubernetes 35 Cluster Basic Documentation
 
-This documentation provides step-by-step instructions for setting up a Kubernetes 29 cluster, installing necessary components such as Cilium, Rook Ceph storage, and Crunchy PGO, and deploying a PostgreSQL cluster.
+This documentation provides step-by-step instructions for setting up a Kubernetes 35 cluster, installing necessary components such as Cilium, Rook Ceph storage, and Crunchy PGO, and deploying a PostgreSQL cluster.
 
 ## Table of Contents
 
-1. [Setup Kubernetes 29 Cluster](#setup-kubernetes-29-cluster)
+1. [Setup Kubernetes 35 Cluster](#setup-kubernetes-35-cluster)
 2. [Initialize Kubernetes and Install Cilium](#initialize-kubernetes-and-install-cilium)
 3. [Setup and Install Rook Ceph Storage](#setup-and-install-rook-ceph-storage)
 4. [Setup Crunchy PGO](#setup-crunchy-pgo)
 5. [Setup kubectl-pgo Client](#setup-kubectl-pgo-client)
 6. [Setup Namespace and Install Database Cluster](#setup-namespace-and-install-database-cluster)
 
-### 1. Setup Kubernetes 29 Cluster
+### 1. Setup Kubernetes 35 Cluster
 
-Use the provided auto script to set up the Kubernetes 29 cluster.
+Use the provided auto script to set up the Kubernetes 35 cluster.
 
 #### Command
 
@@ -32,12 +32,12 @@ Use the provided auto script to set up the Kubernetes 29 cluster.
 # Clone the repository and run the installation script
 git clone <your-git-repository-url>
 cd cluster-doc
-bash install-k8s-1.29.sh
+bash install-k8s-1.35.sh
 ```
 
 #### Explanation
 
-- This script automates the setup of a Kubernetes 29 cluster. Ensure you have the necessary permissions to execute the script.
+- This script automates the setup of a Kubernetes 35 cluster. Ensure you have the necessary permissions to execute the script.
 
 ### 2. Initialize Kubernetes and Install Cilium
 
@@ -139,7 +139,7 @@ Install the `kubectl-pgo` client to interact with the Crunchy PostgreSQL Operato
 
 ```bash
 # Download and install the kubectl-pgo client
-wget https://github.com/CrunchyData/postgres-operator-client/releases/download/v0.4.2/kubectl-pgo-linux-amd64
+wget https://github.com/CrunchyData/postgres-operator-client/releases/download/v0.5.3/kubectl-pgo-linux-amd64
 sudo mv kubectl-pgo-linux-amd64 /usr/local/bin/kubectl-pgo
 sudo chmod +x /usr/local/bin/kubectl-pgo
 ```
@@ -172,7 +172,7 @@ metadata:
   namespace: db-ns
   labels:
     pg-cluster: mydatabase
-    pgo-version: 5.6.7
+    pgo-version: 6.0.1
 spec:
   image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:ubi8-13.8-1
   postgresVersion: 13
@@ -246,4 +246,4 @@ kubectl apply -f mydatabase-13-demo.yaml
 - `cat <<EOF > mydatabase-13-demo.yaml ... EOF`: Saves the PostgreSQL cluster configuration to a file named `mydatabase-13-demo.yaml`.
 - `kubectl apply -f mydatabase-13-demo.yaml`: Applies the configuration to create the PostgreSQL cluster.
 
-By following these detailed steps, you can set up a Kubernetes 29 cluster with Crunchy PGO 5.6.7, install necessary components, and deploy a PostgreSQL cluster.
+By following these detailed steps, you can set up a Kubernetes 35 cluster with Crunchy PGO 6.0.1, install necessary components, and deploy a PostgreSQL cluster.
