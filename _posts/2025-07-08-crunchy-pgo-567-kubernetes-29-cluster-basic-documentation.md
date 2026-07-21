@@ -105,13 +105,20 @@ Install the Crunchy PostgreSQL Operator (PGO) to manage PostgreSQL clusters.
 #### Commands
 
 ```bash
-# Clone the PostgreSQL Operator examples repository
-git clone https://github.com/CrunchyData/postgres-operator-examples.git
-cd postgres-operator-examples/
+# Step 1: Clone the operator repo (not the examples repo) for the installer
+git clone https://github.com/CrunchyData/postgres-operator.git
+cd postgres-operator
+git checkout v6.0.1   # pin to a released tag, main branch may have unreleased images
 
-# Install the Crunchy PostgreSQL Operator
-kubectl apply -k kustomize/install/namespace
-kubectl apply --server-side -k kustomize/install/default
+# Step 2: Install PGO (creates CRDs + controller) via kustomize
+kubectl apply -k config/namespace
+kubectl apply --server-side -k config/default
+
+# Step 3: Verify the operator pod is running
+kubectl -n postgres-operator get pods --selector=postgres-operator.crunchydata.com/control-plane=postgres-operator
+
+# Step 4: Now go back to the examples repo to create the actual cluster
+cd ../postgres-operator-examples
 kubectl apply -k kustomize/postgres
 ```
 
