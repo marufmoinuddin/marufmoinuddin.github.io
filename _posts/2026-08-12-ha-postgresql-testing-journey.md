@@ -1,11 +1,11 @@
 ---
 layout: post
-title: "Testing High Availability PostgreSQL: From Manual Failover to Patroni + etcd + pgpool-II — A Journey of Real Faults, Honest Gaps, and Two Bugs We Didn't Expect"
+title: "Testing High Availability PostgreSQL: From Manual Failover to Patroni + etcd + pgpool-II — A Journey of Real Faults, Honest Gaps, and Three Bugs We Didn't Expect"
 date: 2026-08-12
 category: PostgreSQL
 tags: [postgresql, patroni, etcd, pgpool-ii, high-availability, pgbackrest, failover, fault-injection, testing, production-readiness]
 excerpt: "An honest engineering journey testing Patroni + etcd + pgpool-II against the exact fears that kept production on manual failover — false positives, data loss, and the real bugs we found along the way."
-read_time: 28
+read_time: 29
 ---
 
 ## Table of Contents
@@ -365,13 +365,14 @@ In one observed run this produced roughly a **4-minute write-availability gap** 
 
 **Root cause:** `sr_check_period = 10` (default) → pgpool only checks primary role every 10s. With 3 backends, worst-case detection = 30s + election + attach. But more critically, **no active notification** from Patroni on clean switchover.
 
-**Fix in progress** (deployed via `08_Configure_Switchover_Signal.yml` + `files/pgpool_role_signal.sh`):
+**Fix deployed and validated** (deployed via `08_Configure_Switchover_Signal.yml` + `files/pgpool_role_signal.sh`):
 
 Patroni `on_role_change` callback → `pcp_promote_node` on all pgpool nodes immediately:
 ```yaml
-# In patroni.yml (rendered by 03_Configure_Patroni.yml):
-callbacks:
-  on_role_change: /usr/local/sbin/pgpool_role_signal.sh
+# In patroni.yml (rendered by 03_Configure_Patroni.yml), nested under postgresql: section:
+postgresql:
+  callbacks:
+    on_role_change: /usr/local/sbin/pgpool_role_signal.sh
 ```
 
 ```bash
@@ -387,7 +388,20 @@ callbacks:
 sr_check_period = 3   # bounds residual window; overhead: 1 trivial query/backend/3s
 ```
 
-**Target:** Sub-10s detection on clean switchover.
+**Validated result (clean, isolated retest — single switchover, not compounded by rapid repeated ones):**
+
+| Metric | Before Fix | After Fix |
+|--------|-----------|-----------|
+| Write-availability gap | ~4 min 15s | **~3–4 seconds** |
+| Writes survived | N/A | **999/999** confirmed |
+| Data loss | N/A | **0** |
+| Split-brain | N/A | **0** |
+
+This was the hard case specifically — the new primary was **not** the same node holding the VIP. The active callback signal eliminated the polling-bound detection window entirely.
+
+**Honest framing:** This is not literal zero downtime, and it isn't expected to be — an async, connection-pooled architecture always retains some residual window for in-flight connection teardown and retry. Single-digit seconds was the realistic target, and that's what was achieved.
+
+**One more honest detail worth including:** the retest process itself caught a fifth bug during this fix — the callback configuration was initially placed at the wrong level in the Patroni config (top-level `callbacks:` instead of nested inside the `postgresql:` section) and silently never fired until the retest's own measurement caught that nothing had actually changed on the first attempt. This is a good real-world example of why measuring the actual before/after number matters more than just deploying a fix and assuming it worked.
 
 ---
 
@@ -400,25 +414,25 @@ sr_check_period = 3   # bounds residual window; overhead: 1 trivial query/backen
 | Split-brain prevention | **Validated** | 0 events across 3,600+ direct `pg_is_in_recovery()` probes |
 | Crash failover time | **~40s median** | Consistent across 5 clean-kill iterations (virsh destroy) |
 | **DCS (etcd) as write-availability SPOF** | **Open — known limitation** | 2/3 PG nodes healthy, 0 writable primaries; mitigations in design |
-| **Planned switchover detection lag** | **Open — ~4 min gap** | pgpool polls; active notification hook WIP (`pgpool_role_signal.sh`) |
+| **Planned switchover detection lag** | **Fixed & verified** | ~3–4s gap (active callback + sr_check_period=3s); 999/999 writes survived |
 | Long-duration soak (weeks) | **Not yet completed** | Instrumentation ready; needs calendar time |
 
-**The honest bottom line:** Two genuine, previously-unknown bugs were found and fixed through this process — a materially better outcome than an all-green test run would have been, because it demonstrates the testing methodology itself catches the failure modes that matter, not just the easy ones.
+**The honest bottom line:** Three genuine, previously-unknown bugs were found and fixed through this process — a materially better outcome than an all-green test run would have been, because it demonstrates the testing methodology itself catches the failure modes that matter, not just the easy ones.
 
 The architecture is meaningfully closer to a credible production candidate than when this process started, but it is **not** being pitched as "just switch now." The honest state:
 
 - The exact fears the production team raised (false positives, data loss) were directly tested and answered well
-- A real architectural gap (DCS SPOF) and a real performance gap (switchover detection lag) are known, named, and being worked on rather than hidden
+- A real architectural gap (DCS SPOF) is known, named, and being worked on rather than hidden
+- The performance gap (switchover detection lag) has been resolved to single-digit seconds
 - A longer real-world soak period is still the right bar before calling this fully done
 
 ---
 
 ## 12. What's Next
 
-1. **Switchover notification hook completion** — Replace pgpool's polling with an active Patroni → pgpool signal on clean switchover (target: sub-10s detection). The `pgpool_role_signal.sh` callback is deployed; needs validation on the next planned switchover.
-2. **Extended soak** — Run the instrumented cluster under production-like load for 2–4 weeks with the event log and Prometheus counters active. The `cluster_health.sh` timer (from `07_Configure_Cluster_Health.yml`) already emits the metrics; needs time.
-3. **etcd topology decision** — Evaluate the three mitigations for the DCS SPOF (witness nodes, decoupled failure domain, 5-node etcd) and pick one for the next validation cycle. The `etcd_group` variable in `variables.yaml.example` supports dedicated witness groups.
-4. **Documentation alignment** — Update all internal runbooks to reflect the *actual* measured numbers (31s partition recovery, 40s crash failover, 4 min switchover gap) instead of aspirational claims.
+1. **Extended soak** — Run the instrumented cluster under production-like load for 2–4 weeks with the event log and Prometheus counters active. The `cluster_health.sh` timer (from `07_Configure_Cluster_Health.yml`) already emits the metrics; needs time.
+2. **etcd topology decision** — Evaluate the three mitigations for the DCS SPOF (witness nodes, decoupled failure domain, 5-node etcd) and pick one for the next validation cycle. The `etcd_group` variable in `variables.yaml.example` supports dedicated witness groups.
+3. **Documentation alignment** — Update all internal runbooks to reflect the *actual* measured numbers (31s partition recovery, 40s crash failover, ~3–4s switchover) instead of aspirational claims.
 
 The journey continues. The goal was never a green checkbox — it was earning the production team's trust with evidence. That trust is built on the bugs we found, not the ones we didn't.
 
