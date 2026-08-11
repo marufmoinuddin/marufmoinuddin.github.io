@@ -1,5 +1,64 @@
 [
   {
+    "title": "Testing High Availability PostgreSQL: From Manual Failover to Patroni + etcd + pgpool-II \u2014 A Journey of Real Faults, Honest Gaps, and Two Bugs We Didn't Expect",
+    "url": "/blog/2026/08/testing-high-availability-postgresql-from-manual-failover-to-patroni-etcd-pgpool-ii-a-journey-of-real-faults-honest-gaps-and-two-bugs-we-didn-t-expect/",
+    "excerpt": "An honest engineering journey testing Patroni + etcd + pgpool-II against the exact fears that kept production on manual failover \u2014 false positives, data loss, and the real bugs we found along the way.",
+    "tags": [
+      "postgresql",
+      "patroni",
+      "etcd",
+      "pgpool-ii",
+      "high-availability",
+      "pgbackrest",
+      "failover",
+      "fault-injection",
+      "testing",
+      "production-readiness"
+    ],
+    "category": "PostgreSQL",
+    "date": "2026-08-12"
+  },
+  {
+    "title": "PGO Hands-On Demo & Operations Playbook",
+    "url": "/blog/2026/07/pgo-hands-on-demo-operations-playbook/",
+    "excerpt": "",
+    "tags": [
+      "postgresql",
+      "kubernetes",
+      "pgo",
+      "crunchy-data",
+      "patroni",
+      "pgbackrest",
+      "operator",
+      "high-availability",
+      "backup",
+      "disaster-recovery",
+      "monitoring",
+      "playbook"
+    ],
+    "category": "PostgreSQL",
+    "date": "2026-07-21"
+  },
+  {
+    "title": "Crunchy Data PostgreSQL Operator (PGO) \u2014 Production Operations Guide",
+    "url": "/blog/2026/07/crunchy-data-postgresql-operator-pgo-production-operations-guide/",
+    "excerpt": "A comprehensive production operations guide for Crunchy Data's PostgreSQL Operator (PGO) on Kubernetes. Covers deploying PostgresCluster resources, Patroni configuration, pgBackRest backups, PITR, disaster recovery, scaling, monitoring, and day-2 operations.",
+    "tags": [
+      "postgresql",
+      "kubernetes",
+      "pgo",
+      "crunchy-data",
+      "patroni",
+      "pgbackrest",
+      "operator",
+      "high-availability",
+      "backup",
+      "disaster-recovery"
+    ],
+    "category": "PostgreSQL",
+    "date": "2026-07-21"
+  },
+  {
     "title": "A Secure Kubernetes Multi-Master Cluster Setup Guide",
     "url": "/blog/2026/07/a-secure-kubernetes-multi-master-cluster-setup-guide/",
     "excerpt": "A comprehensive, secure, step-by-step manual guide for setting up a production-grade multi-master Kubernetes cluster. Covers architecture planning, OS prerequisites, cluster initialization with kubeadm, high availability with Keepalived and HAProxy, Cilium CNI, certificate management, and troubleshooting.",
@@ -32,6 +91,22 @@
     "date": "2026-07-17"
   },
   {
+    "title": "PostgreSQL 17 + Pgpool-II HA Cluster \u2014 Configuration Guide",
+    "url": "/blog/2026/06/postgresql-17-pgpool-ii-ha-cluster-configuration-guide/",
+    "excerpt": "A comprehensive step-by-step guide to deploying a highly available PostgreSQL 17 cluster with Pgpool-II 4.5, including streaming replication, watchdog, virtual IP failover, and connection pooling.",
+    "tags": [
+      "postgresql",
+      "pgpool",
+      "high-availability",
+      "clustering",
+      "streaming-replication",
+      "load-balancing",
+      "failover"
+    ],
+    "category": "PostgreSQL",
+    "date": "2026-06-10"
+  },
+  {
     "title": "ETL Server Setup to transfer data from Production to a Example. Data Warehouse Guide: Apache Airflow & PipelineWise",
     "url": "/blog/2025/07/etl-server-setup-to-transfer-data-from-production-to-a-example-data-warehouse-guide-apache-airflow-pipelinewise/",
     "excerpt": "This guide provides clear, step-by-step instructions for setting up Apache Airflow and PipelineWise to manage and orchestrate ETL (Extract, Transform, Load) pipelines. It is designed to be beginner-friendly, ensuring\u2026",
@@ -48,9 +123,9 @@
     "date": "2025-07-29"
   },
   {
-    "title": "Crunchy PGO 5.6.7 Kubernetes 29 Cluster Basic Documentation",
-    "url": "/blog/2025/07/crunchy-pgo-5-6-7-kubernetes-29-cluster-basic-documentation/",
-    "excerpt": "This documentation provides step-by-step instructions for setting up a Kubernetes 29 cluster, installing necessary components such as Cilium, Rook Ceph storage, and Crunchy PGO, and deploying a PostgreSQL cluster.",
+    "title": "Crunchy PGO 6.0.1 Kubernetes 35 Cluster Basic Documentation",
+    "url": "/blog/2025/07/crunchy-pgo-6-0-1-kubernetes-35-cluster-basic-documentation/",
+    "excerpt": "This documentation provides step-by-step instructions for setting up a Kubernetes 35 cluster, installing necessary components such as Cilium, Rook Ceph storage, and Crunchy PGO, and deploying a PostgreSQL cluster.",
     "tags": [
       "ceph",
       "cilium",
@@ -390,5 +465,50 @@
     ],
     "category": "PostgreSQL",
     "date": "2024-12-02"
+  },
+  {
+    "title": "Enable \"Hey Cortana\" Voice Command on Any Windows Phone",
+    "url": "/blog/2018/03/enable-hey-cortana-voice-command-on-any-windows-phone/",
+    "excerpt": "A step-by-step guide to enable the Hey Cortana voice activation feature on any Windows Phone device using Interop Tools and a registry tweak.",
+    "tags": [
+      "windows",
+      "windows-phone",
+      "cortana",
+      "registry",
+      "trick"
+    ],
+    "category": "Windows",
+    "date": "2018-03-05"
+  },
+  {
+    "title": "Reviving a \"Dead\" (Bricked) Lumia Using Windows Device Recovery Tool's Emergency/Thor2 Mode",
+    "url": "/blog/2017/08/reviving-a-dead-bricked-lumia-using-windows-device-recovery-tool-s-emergency-thor2-mode/",
+    "excerpt": "A comprehensive guide for recovering a bricked Lumia via the Windows Device Recovery Tool's hidden thor2.exe emergency-flash mode, with corrections and additions from the definitive XDA community reference.",
+    "tags": [
+      "windows",
+      "windows-phone",
+      "lumia",
+      "unbrick",
+      "wdrt",
+      "thor2",
+      "guide"
+    ],
+    "category": "Windows",
+    "date": "2017-08-29"
+  },
+  {
+    "title": "Windows 10 Mobile Offline Update Guide (Windows Phone 8.1 \u2192 Windows 10 Mobile 10586.107 and beyond)",
+    "url": "/blog/2017/04/windows-10-mobile-offline-update-guide-windows-phone-8-1-windows-10-mobile-10586-107-and-beyond/",
+    "excerpt": "A comprehensive guide for using the community Offline Update Project (iutool) to push Windows 10 Mobile onto Lumia and other Windows Phone 8.x devices no longer supported by Microsoft's official Upgrade Advisor.",
+    "tags": [
+      "windows",
+      "windows-phone",
+      "lumia",
+      "offline-update",
+      "iutool",
+      "guide"
+    ],
+    "category": "Windows",
+    "date": "2017-04-09"
   }
 ]
