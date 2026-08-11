@@ -1,7 +1,7 @@
 [
   {
-    "title": "Testing High Availability PostgreSQL: From Manual Failover to Patroni + etcd + pgpool-II \u2014 A Journey of Real Faults, Honest Gaps, and Two Bugs We Didn't Expect",
-    "url": "/blog/2026/08/testing-high-availability-postgresql-from-manual-failover-to-patroni-etcd-pgpool-ii-a-journey-of-real-faults-honest-gaps-and-two-bugs-we-didn-t-expect/",
+    "title": "Testing High Availability PostgreSQL: From Manual Failover to Patroni + etcd + pgpool-II \u2014 A Journey of Real Faults, Honest Gaps, and Three Bugs We Didn't Expect",
+    "url": "/blog/2026/08/testing-high-availability-postgresql-from-manual-failover-to-patroni-etcd-pgpool-ii-a-journey-of-real-faults-honest-gaps-and-three-bugs-we-didn-t-expect/",
     "excerpt": "An honest engineering journey testing Patroni + etcd + pgpool-II against the exact fears that kept production on manual failover \u2014 false positives, data loss, and the real bugs we found along the way.",
     "tags": [
       "postgresql",
