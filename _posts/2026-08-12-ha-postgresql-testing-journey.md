@@ -41,10 +41,10 @@ These are not hypothetical concerns. They are the lived experience of teams who 
 
 The alternative under evaluation is a **Patroni + etcd + pgpool-II** high-availability architecture deployed via Ansible (repo: `patroni-pgpool-ansible`):
 
-- **3 PostgreSQL nodes** (db1=192.168.122.150, db2=192.168.122.151, db3=192.168.122.152) managed by Patroni 3.x
+- **3 PostgreSQL nodes** (db1=192.168.122.150, db2=192.168.122.151, db3=192.168.122.152) managed by Patroni 4.1.3 (Percona build)
 - **etcd 3-node cluster** (co-located on db1/db2/db3, ports 2379/2380) for distributed consensus and leader election
 - **pgpool-II 4.7** (Percona build on RHEL, native on Debian) providing a floating VIP (192.168.122.200/24) and connection pooling on port 9999
-- **pgBackRest** for backup and WAL archiving (stanza `kyc`, repo at `/postgres/pgbackup`)
+- **pgBackRest** for backup and WAL archiving (stanza `kyc`, repo on the dedicated backup host at `/var/lib/pgbackrest`)
 - **Watchdog-based fencing** — `softdog` kernel module on each node; Patroni feeds `/dev/watchdog`; loss of DCS quorum → kernel reboots host (STONITH-style). Hardware watchdog `i6300ESB` available as stronger guarantee.
 - **VIP management** via watchdog `delegate_ip` + `if_up_cmd`/`if_down_cmd` (`ip addr add/del`)
 
@@ -312,34 +312,46 @@ This finding is documented in the project's architectural notes with three mitig
 
 Rather than running one more discrete fault, this test built the logging infrastructure needed for longer-term, real-world observation: an **append-only event log** and **Prometheus counters** tracking every leader election and every "read-only leader" event.
 
-**Event log format (JSONL):**
-```json
-{"ts": "2026-08-12T10:15:30Z", "event": "leader_election", "old_leader": "db1", "new_leader": "db3", "duration_ms": 31200}
-{"ts": "2026-08-12T10:15:35Z", "event": "read_only_leader_detected", "node": "db3", "dcs_role": "Leader", "pg_role": "replica", "action": "triggered_reelection"}
+**Event log format (append-only, space-separated — `/var/log/patroni/leader_events.log`):**
+```text
+2026-08-11 15:25:53 leader_elected member=db1 writable=1
+2026-08-11 15:26:53 leader_changed from=db1 to=db2 writable=1
+2026-08-11 15:27:54 false_positive leader=db2 not_writable role=unknown
+2026-08-11 15:28:25 leader_writable_restored member=db2
+2026-08-11 15:30:00 leader_changed from=db2 to=db1 writable=1
 ```
 
 **Prometheus metrics (textfile collector for node_exporter):**
 ```prom
-# HELP patroni_leader_elections_total Total leader elections
-# TYPE patroni_leader_elections_total counter
-patroni_leader_elections_total{scope="kyc"} 12
+# HELP patroni_leader_changes_total Total leader changes observed by the health monitor
+# TYPE patroni_leader_changes_total counter
+patroni_leader_changes_total 6
 
-# HELP patroni_read_only_leader_events_total Total read-only leader detections
-# TYPE patroni_read_only_leader_events_total counter
-patroni_read_only_leader_events_total{scope="kyc"} 1
+# HELP patroni_leader_read_only_events_total Total false-positive (read-only leader) events
+# TYPE patroni_leader_read_only_events_total counter
+patroni_leader_read_only_events_total 2
+
+# HELP patroni_leader_lost_events_total Total no-leader (safe-unavailable) events
+# TYPE patroni_leader_lost_events_total counter
+patroni_leader_lost_events_total 0
+
+# HELP patroni_etcd_quorum_loss_total Total etcd quorum-loss events
+# TYPE patroni_etcd_quorum_loss_total counter
+patroni_etcd_quorum_loss_total 0
 ```
 
-The smoke test for this instrumentation immediately found a second real bug: the detection check itself had a blind spot — a timed-out health probe defaulted to reporting "healthy" instead of flagging the ambiguous state, which is precisely the false-positive class the whole exercise exists to catch.
+The smoke test for this instrumentation immediately found a second real bug: the detection check itself had a blind spot — a timed-out leader REST probe silently produced an *empty* role, which skipped the writability guard, so a stuck (read-only) leader was reported healthy instead of flagged.
 
 ```bash
-# Bug: psql connection timeout (5s) was caught and treated as "query succeeded, no rows"
-# Fix: distinguish timeout from success; timeout = UNKNOWN = do not report healthy
-timeout 5 psql -h $node -c "SELECT 1" || { 
-  case $? in 
-    124) echo "TIMEOUT" ;;  # distinguish from 1 (query error) or 0 (success)
-    *) echo "ERROR" ;;
-  esac
-}
+# Bug: timeout/empty stdin on the curl|jq pipeline yields "" — the old code
+# only treated a NON-empty, non-primary role as a problem, so "" slipped
+# through and the read-only leader passed as healthy:
+LEADER_ROLE=$(curl -s -m 5 "http://${LEADER_HOST}:8008/patroni" 2>/dev/null | jq -r '.role // "unknown"' 2>/dev/null)
+if [ -n "$LEADER_ROLE" ] && [ "$LEADER_ROLE" != "primary" ]; then LEADER_WRITABLE=0; fi
+
+# Fix: empty means "unknown" — and unknown is NOT writable (safer than silently healthy)
+[ -z "$LEADER_ROLE" ] && LEADER_ROLE="unknown"
+if [ "$LEADER_ROLE" != "primary" ]; then LEADER_WRITABLE=0; CRITICAL=1; fi
 ```
 
 **Fixed and reverified.**
@@ -357,11 +369,11 @@ In one observed run this produced roughly a **4-minute write-availability gap** 
 **Timeline from actual run (2026-08-11):**
 | Event | Time | Notes |
 |-------|------|-------|
-| `patronictl switchover` issued | 15:29:05Z | db1 → db2 |
-| Patroni demotes db1, promotes db2 | 15:29:07Z | Complete in <2s |
-| VIP moves to new pgpool leader | 15:29:12Z | Watchdog fast |
-| pgpool `sr_check` detects new primary | 15:33:22Z | **~4 min 15s gap** |
-| First successful write via VIP | 15:33:24Z | |
+| `patronictl switchover` issued | 15:29:05Z | db2 → db1 (leader db2, candidate db1) |
+| Patroni demotes db2, promotes db1 | 15:29:07Z | Complete in <2s |
+| VIP stays on db3 (watchdog leader) | unchanged | **New primary db1 ≠ VIP holder db3** — the hard case |
+| pgpool `sr_check` detects new primary | 15:33:22Z | **~4 min 15s gap** (routing catch-up) |
+| First successful write via VIP | 15:35:29Z | Verified `INSERT` landed on db1 |
 
 **Root cause:** `sr_check_period = 10` (default) → pgpool only checks primary role every 10s. With 3 backends, worst-case detection = 30s + election + attach. But more critically, **no active notification** from Patroni on clean switchover.
 
@@ -401,7 +413,7 @@ This was the hard case specifically — the new primary was **not** the same nod
 
 **Honest framing:** This is not literal zero downtime, and it isn't expected to be — an async, connection-pooled architecture always retains some residual window for in-flight connection teardown and retry. Single-digit seconds was the realistic target, and that's what was achieved.
 
-**One more honest detail worth including:** the retest process itself caught a fifth bug during this fix — the callback configuration was initially placed at the wrong level in the Patroni config (top-level `callbacks:` instead of nested inside the `postgresql:` section) and silently never fired until the retest's own measurement caught that nothing had actually changed on the first attempt. This is a good real-world example of why measuring the actual before/after number matters more than just deploying a fix and assuming it worked.
+**One more honest detail worth including:** the retest process itself caught a third bug during this fix — the callback configuration was initially placed at the wrong level in the Patroni config (top-level `callbacks:` instead of nested inside the `postgresql:` section) and silently never fired until the retest's own measurement caught that nothing had actually changed on the first attempt. This is a good real-world example of why measuring the actual before/after number matters more than just deploying a fix and assuming it worked.
 
 ---
 
@@ -432,7 +444,7 @@ The architecture is meaningfully closer to a credible production candidate than 
 
 1. **Extended soak** — Run the instrumented cluster under production-like load for 2–4 weeks with the event log and Prometheus counters active. The `cluster_health.sh` timer (from `07_Configure_Cluster_Health.yml`) already emits the metrics; needs time.
 2. **etcd topology decision** — Evaluate the three mitigations for the DCS SPOF (witness nodes, decoupled failure domain, 5-node etcd) and pick one for the next validation cycle. The `etcd_group` variable in `variables.yaml.example` supports dedicated witness groups.
-3. **Documentation alignment** — Update all internal runbooks to reflect the *actual* measured numbers (31s partition recovery, 40s crash failover, ~3–4s switchover) instead of aspirational claims.
+3. ~~**Documentation alignment** — Update all internal runbooks to reflect the *actual* measured numbers (31s partition recovery, 40s crash failover, ~3–4s switchover) instead of aspirational claims.~~ **Done (2026-08-12):** `docs/FAILOVER_TESTING.md` now documents the measured switchover window (not "zero downtime"), and the main `README.md` carries the verified numbers throughout.
 
 The journey continues. The goal was never a green checkbox — it was earning the production team's trust with evidence. That trust is built on the bugs we found, not the ones we didn't.
 
