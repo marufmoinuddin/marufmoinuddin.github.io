@@ -1,5 +1,22 @@
 [
   {
+    "title": "PostgreSQL High Availability with Patroni + pgpool-II \u2014 A Complete Guide",
+    "url": "/blog/2026/08/postgresql-high-availability-with-patroni-pgpool-ii-a-complete-guide/",
+    "excerpt": "A complete, decision-ready guide to a production 3-node PostgreSQL 16 HA cluster \u2014 Patroni owns the data plane, pgpool-II owns the access plane, with 5/5 validated power-loss failovers, zero data loss, and honest caveats.",
+    "tags": [
+      "postgresql",
+      "high-availability",
+      "patroni",
+      "pgpool-ii",
+      "etcd",
+      "pgbackrest",
+      "failover",
+      "ansible"
+    ],
+    "category": "PostgreSQL",
+    "date": "2026-08-25"
+  },
+  {
     "title": "Testing High Availability PostgreSQL: From Manual Failover to Patroni + etcd + pgpool-II \u2014 A Journey of Real Faults, Honest Gaps, and Three Bugs We Didn't Expect",
     "url": "/blog/2026/08/testing-high-availability-postgresql-from-manual-failover-to-patroni-etcd-pgpool-ii-a-journey-of-real-faults-honest-gaps-and-three-bugs-we-didn-t-expect/",
     "excerpt": "An honest engineering journey testing Patroni + etcd + pgpool-II against the exact fears that kept production on manual failover \u2014 false positives, data loss, and the real bugs we found along the way.",
