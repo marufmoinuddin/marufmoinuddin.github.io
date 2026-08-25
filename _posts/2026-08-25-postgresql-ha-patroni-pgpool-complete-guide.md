@@ -6,7 +6,9 @@ category: PostgreSQL
 tags: [postgresql, high-availability, patroni, pgpool-ii, etcd, pgbackrest, failover, ansible]
 excerpt: "A complete, decision-ready guide to a production 3-node PostgreSQL 16 HA cluster — Patroni owns the data plane, pgpool-II owns the access plane, with 5/5 validated power-loss failovers, zero data loss, and honest caveats."
 read_time: 55
----# PostgreSQL High Availability with Patroni + pgpool-II — A Complete Guide
+---
+
+# PostgreSQL High Availability with Patroni + pgpool-II — A Complete Guide
 
 > **One file. No prior DBA knowledge required.**
 > This guide explains a production PostgreSQL 16 high-availability cluster — what it is, why it exists, how it works, how it was deployed, how it behaves under failure, and what its honest limitations are — for a supervisor who needs to make an informed decision.
