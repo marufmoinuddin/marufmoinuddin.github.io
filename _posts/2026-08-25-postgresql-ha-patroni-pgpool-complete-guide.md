@@ -5,7 +5,7 @@ date: 2026-08-25
 category: PostgreSQL
 tags: [postgresql, high-availability, patroni, pgpool-ii, etcd, pgbackrest, failover, ansible]
 excerpt: "A complete, decision-ready guide to a production 3-node PostgreSQL 16 HA cluster — Patroni owns the data plane, pgpool-II owns the access plane, with 5/5 validated power-loss failovers, zero data loss, and honest caveats."
-read_time: 91
+read_time: 96
 ---
 
 # PostgreSQL High Availability with Patroni + pgpool-II — A Complete Guide
@@ -14,9 +14,9 @@ read_time: 91
 > This guide explains a production PostgreSQL 16 high-availability cluster — what it is, why it exists, how it works, how it was deployed, how it behaves under failure, and what its honest limitations are — for a supervisor who needs to make an informed decision.
 
 > 🗺️ **Reader's map — read only what you need:**
-> - **Making the buy/build decision?** Read §1–8 (what it is, why it exists, how it works) and §15–16 (evidence + honest limitations).
-> - **Deploying or operating the cluster?** Read §9 (manual deploy) or §10 (automated deploy), then §11 (day-2 operations), §12 (production hardening), §13 (security & secrets — incl. the `CHANGE_ME_*` mapping for §9), and §14 (troubleshooting).
-> - **Just need a term defined?** The Glossary (§17) defines every acronym.
+> - **Making the buy/build decision?** Read §1–8 (what it is, why it exists, how it works) and §14–16 (evidence + honest limitations).
+> - **Deploying or operating the cluster?** Read §9 (deploy), then §10 (day-2 operations), §11 (production hardening), §12 (security & secrets — incl. the `CHANGE_ME_*` mapping for §9), and §13 (troubleshooting).
+> - **Just need a term defined?** The Glossary (§16) defines every acronym.
 > - §9 is a full implementer runbook; if you are only evaluating, you can skip it.
 
 ---
@@ -29,7 +29,7 @@ The single most important mental model is: **Patroni owns the data plane** (whic
 
 The architecture has been **stress-tested with real power-loss fault injection**: **5 out of 5 consecutive failovers passed**, with **zero lost commits** across ~104,000 confirmed writes and **zero split-brain** across 3,600 direct node probes. Failover took ~40 seconds (median), clients saw a 34–38 second write interruption, and killed nodes rejoined in 36–40 seconds — all automatically, without human intervention or re-provisioning.
 
-> 📖 **Jargon you'll meet in this summary** (all defined properly in §3 and the Glossary §17): **Patroni** = the cluster manager that decides who is primary; **pgpool-II** = the traffic controller apps connect to; **replication** = copying the database to other nodes; **WAL** = the transaction log; **quorum** = a majority of nodes agreeing; **split-brain** = two nodes both acting as primary; **async replication** = replicas may lag slightly behind the primary.
+> 📖 **Jargon you'll meet in this summary** (all defined properly in §3 and the Glossary §16): **Patroni** = the cluster manager that decides who is primary; **pgpool-II** = the traffic controller apps connect to; **replication** = copying the database to other nodes; **WAL** = the transaction log; **quorum** = a majority of nodes agreeing; **split-brain** = two nodes both acting as primary; **async replication** = replicas may lag slightly behind the primary.
 
 This is not magic and not perfect: replication is asynchronous (a hard zero-data-loss guarantee would require synchronous mode), and etcd is a single point of failure for *write availability* (mitigations are documented). But for a self-contained production cluster, this design delivers automatic, safe, observable failover — with the evidence to prove it.
 
@@ -60,9 +60,9 @@ High availability does **not** mean "never fails." It means the system **keeps s
 |--------|--------------|----------------|
 | Trigger | **Unplanned** — primary crashes, power loss, kernel panic, OOM | **Planned** — maintenance, OS upgrades, hardware replacement |
 | Initiation | **Automatic** (Patroni detects the failure) | **Manual** (`patronictl switchover`) |
-| Data loss risk | Possible with async replication (see §16) | Zero (graceful handoff) |
+| Data loss risk | Possible with async replication (see §15) | Zero (graceful handoff) |
 | Old primary | May still be running (split-brain risk, handled by fencing) | Gracefully demoted to replica |
-| Speed | Seconds to ~40s (depends on TTL settings) | Near-instant (a few seconds with this repo's fix) |
+| Speed | Seconds to ~40s (depends on TTL settings) | Near-instant (a few seconds with the callback fix) |
 
 ### What split-brain is, and why it is dangerous
 
@@ -80,7 +80,7 @@ This cluster prevents split-brain with three layers: **etcd quorum** (a majority
 
 ## 3. Core Concepts (Fundamentals)
 
-This section explains the vocabulary you need before reading the architecture. Everything is defined in plain language; the formal definitions are also collected in the Glossary (§17).
+This section explains the vocabulary you need before reading the architecture. Everything is defined in plain language; the formal definitions are also collected in the Glossary (§16).
 
 ### Primary vs. replica
 
@@ -105,7 +105,7 @@ PostgreSQL's transaction log. Every data modification is written to the WAL **be
 - **Durability / crash recovery** — a power loss can never corrupt committed data; PostgreSQL replays the WAL on restart.
 - **Replication** — replicas replay the same WAL stream, so they end up with a consistent copy.
 
-WAL segments are 16 MB files in `pg_wal/`, recycled by checkpoints and archiving. Once pgBackRest is applied (Phase 5 / play 05), WAL is also **archived to the backup node**, enabling point-in-time recovery (§11). (Archiving is `off` by default until then.)
+WAL segments are 16 MB files in `pg_wal/`, recycled by checkpoints and archiving. Once pgBackRest is applied (Phase 5), WAL is also **archived to the backup node**, enabling point-in-time recovery (§10). (Archiving is `off` by default until then.)
 
 ### Replication slots
 
@@ -119,7 +119,7 @@ A replication slot is a server-side bookmark that tells the primary: *"Do not re
 | Initiation | Automatic (Patroni) | Manual (`patronictl switchover`) |
 | Data-loss risk | Possible (async replication) | Zero (graceful) |
 | Old primary handling | May need fencing if still running | Gracefully demoted |
-| Speed | ~40s with defaults (tunable) | ~3–4s with this repo's callback fix |
+| Speed | ~40s with defaults (tunable) | ~3–4s with the callback fix |
 
 ### Split-brain and how it is prevented
 
@@ -146,7 +146,7 @@ The lock is a single etcd key per scope: `/percona_lab/maruf/leader`. Only one n
 | 5 | 3 | 2 |
 | 7 | 4 | 3 |
 
-With 3 nodes you tolerate **exactly one** node failure and still make decisions. With 2 nodes, quorum = 2, so **zero** failures are tolerated — two nodes are strictly worse than one for consensus. This is why this cluster uses **3 etcd nodes** (co-located on the 3 database nodes by default; dedicated witness options are discussed in §16).
+With 3 nodes you tolerate **exactly one** node failure and still make decisions. With 2 nodes, quorum = 2, so **zero** failures are tolerated — two nodes are strictly worse than one for consensus. This is why this cluster uses **3 etcd nodes** (co-located on the 3 database nodes by default; dedicated witness options are discussed in §15).
 
 ---
 
@@ -298,17 +298,17 @@ This single question drives every difference between the two options.
 
 ### Honest pros and cons
 
-**Patroni + pgpool-II (what this repo deploys):**
+**Patroni + pgpool-II (what this guide deploys):**
 - ✅ Automatic, consensus-driven failover (measured ~38–43 s for a hard kill; ~3–4 s for a clean switchover with the callback fix).
 - ✅ Real split-brain protection: 2/3 quorum + TTL lease + softdog host reboot.
 - ✅ Automatic replica rejoin via `pg_rewind` — the old primary comes back and resynchronizes against the new leader without a full re-copy.
 - ✅ Replication slots managed automatically.
 - ✅ Centralized PostgreSQL configuration (stored in etcd, applied everywhere via `patronictl reload`).
 - ✅ A clean REST API + `patronictl` — the cluster is operable by a human.
-- ✅ Self-healing timers (see §11).
+- ✅ Self-healing timers (see §10).
 - ✅ Proven: 5/5 power-loss failovers with zero lost commits and zero split-brain.
 - ❌ More moving parts (Patroni + etcd on every node).
-- ❌ etcd is a write-availability SPOF if it loses quorum (documented finding — see §16).
+- ❌ etcd is a write-availability SPOF if it loses quorum (documented finding — see §15).
 - ❌ Higher operational complexity (TTL, loop_wait, pg_rewind, fencing concepts).
 - ❌ Slightly more resource overhead (etcd is latency-sensitive).
 - ❌ Failover is not instant — TTL + loop_wait means ~40 s worst case with defaults (tunable down to ~15–20 s).
@@ -321,12 +321,12 @@ This single question drives every difference between the two options.
 - ❌ Manual replication management (`primary_conninfo`, `standby.signal`, slots by hand).
 - ❌ No `pg_rewind` automation — rejoining a diverged node needs a full `pg_basebackup`.
 - ❌ No centralized config; drift is easy.
-- ❌ pgpool's primary detection is polling-based and can be *stale* — this repo observed exactly that (a ~4-minute switchover gap) and fixed it with a Patroni callback; without Patroni there is no such active signal, so the gap is unbounded by design.
+- ❌ pgpool's primary detection is polling-based and can be *stale* — this architecture observed exactly that (a ~4-minute switchover gap) and fixed it with a Patroni callback; without Patroni there is no such active signal, so the gap is unbounded by design.
 - ❌ No self-healing — a crashed node stays down until a human intervenes.
 
 ### Recommendation
 
-- **Choose Patroni + pgpool-II** for anything that matters: production, customer-facing, or where **zero data loss and no split-brain** are requirements. This is exactly what this repository builds and has validated with real fault injection.
+- **Choose Patroni + pgpool-II** for anything that matters: production, customer-facing, or where **zero data loss and no split-brain** are requirements. This is exactly what this guide describes and has validated with real fault injection.
 - **Choose standalone + pgpool-II** only for a quick lab, a read-mostly workload where you accept manual failover, or where the simplicity of "no etcd, no Patroni" outweighs the risk. Treat it as **not HA** in the strict sense — it is "manual failover with a VIP."
 
 > **Bottom line: pgpool-II is a traffic controller, not a consensus engine. Pair it with Patroni when you need real high availability; run it standalone only when you are willing to manage failover by hand.**
@@ -337,7 +337,7 @@ This single question drives every difference between the two options.
 
 Both architectures share the **same Patroni + etcd data plane** — automatic failover, split-brain protection, `pg_rewind`, slots, centralized config, `patronictl` are identical. The choice is purely about the **access layer** — the component(s) in front of the database that clients actually connect to.
 
-- **Option A (this repo):** pgpool-II — one integrated component doing pooling + SQL-aware read/write splitting + primary detection + floating VIP (built-in watchdog).
+- **Option A (this guide):** pgpool-II — one integrated component doing pooling + SQL-aware read/write splitting + primary detection + floating VIP (built-in watchdog).
 - **Option B:** HAProxy (L4 TCP load balancer) + PgBouncer (dedicated connection pooler) + Keepalived (separate VIP mechanism) — three specialized components.
 
 ### How each layer handles the same jobs
@@ -351,13 +351,13 @@ Both architectures share the **same Patroni + etcd data plane** — automatic fa
 | SQL awareness | Yes (parses queries) | No (HAProxy is L4; PgBouncer is a pooler, not a router) |
 | Session-level features | Yes (SELECT routing, function blacklist) | Limited (HAProxy can't see SQL) |
 | Components to run | 1 (pgpool-II) | 2–3 (HAProxy + PgBouncer + Keepalived) |
-| Active failover signal | ✅ `pcp_promote_node` callback (wired in this repo) | ⚠️ Polling only (scriptable) |
+| Active failover signal | ✅ `pcp_promote_node` callback (wired in this guide) | ⚠️ Polling only (scriptable) |
 
 ### Key differences that matter to a decision-maker
 
 1. **SQL awareness.** pgpool parses queries, so it can route `SELECT` to replicas and `INSERT/UPDATE/DELETE` to the primary **from a single connection string**, blacklist unsafe functions (`nextval`, `setval`, …), and handle `SELECT … FOR UPDATE` correctly. HAProxy cannot see SQL at all — read/write splitting is done **by pool**, which means **the application must use separate connection strings for reads vs. writes**.
-2. **Built-in VIP vs. extra daemon.** pgpool's watchdog elects a leader and floats the VIP with quorum + `wd_quorum_exit` split-brain protection (already hardened in this repo). Option B needs a separate Keepalived — an extra daemon and an extra split-brain surface.
-3. **Active failover signaling.** This repo wires a Patroni `on_role_change` callback that runs `pcp_promote_node` immediately, closing the switchover detection gap to ~3–4 s. HAProxy relies on polling the `:8008` health check (you can script a push, but it's extra work).
+2. **Built-in VIP vs. extra daemon.** pgpool's watchdog elects a leader and floats the VIP with quorum + `wd_quorum_exit` split-brain protection (already hardened here). Option B needs a separate Keepalived — an extra daemon and an extra split-brain surface.
+3. **Active failover signaling.** This guide wires a Patroni `on_role_change` callback that runs `pcp_promote_node` immediately, closing the switchover detection gap to ~3–4 s. HAProxy relies on polling the `:8008` health check (you can script a push, but it's extra work).
 4. **Pooling strength.** PgBouncer is the de-facto standard for extreme concurrency (transaction pooling, thousands of clients). pgpool's pooling is adequate for hundreds to low thousands of connections but not as battle-tested at that scale.
 5. **Component count and ops.** One service per node vs. three; fewer failure modes, less config drift — but pgpool is a heavier, more complex process with a steeper config surface than HAProxy.
 
@@ -366,7 +366,7 @@ Both architectures share the **same Patroni + etcd data plane** — automatic fa
 **Choose Patroni + pgpool-II when:**
 - You want **one integrated access layer** (pooling + routing + VIP) — simpler to operate and monitor.
 - You want **SQL-aware read/write splitting** — the app uses a single connection string and pgpool routes queries.
-- You value the **built-in watchdog VIP** with quorum + split-brain protection and the **active failover callback** already wired in this repo.
+- You value the **built-in watchdog VIP** with quorum + split-brain protection and the **active failover callback** already wired in this guide.
 - Your concurrency needs are moderate (hundreds to low thousands of connections).
 
 **Choose Patroni + HAProxy + PgBouncer when:**
@@ -375,7 +375,7 @@ Both architectures share the **same Patroni + etcd data plane** — automatic fa
 - Your application can **split read vs. write connection strings** (or you add a router), because HAProxy cannot route by SQL.
 - You already run HAProxy/Keepalived elsewhere and want to reuse that expertise.
 
-> **Bottom line for this repo:** pgpool-II delivers a complete, validated, all-in-one access layer with SQL-aware routing and a built-in VIP — ideal for a self-contained 3-node HA cluster. If the workload later demands extreme connection concurrency, the HAProxy + PgBouncer model is the natural evolution — and it reuses the exact same Patroni + etcd data plane already deployed here.
+> **Bottom line:** pgpool-II delivers a complete, validated, all-in-one access layer with SQL-aware routing and a built-in VIP — ideal for a self-contained 3-node HA cluster. If the workload later demands extreme connection concurrency, the HAProxy + PgBouncer model is the natural evolution — and it reuses the exact same Patroni + etcd data plane already deployed here.
 
 ---
 
@@ -424,7 +424,7 @@ CLIENT ROUTING (pgpool-II): health check sees db2 up as primary →
    writes routed to db2; the VIP may move independently via watchdog
 ```
 
-**Failover time ≈ TTL + loop_wait** (30 s + 10 s = ~40 s worst case with these defaults). Measured in this repo: **38–43 s** from power loss to first successful write, median ~40 s.
+**Failover time ≈ TTL + loop_wait** (30 s + 10 s = ~40 s worst case with these defaults). Measured in this deployment: **38–43 s** from power loss to first successful write, median ~40 s.
 
 > 📐 **Why the client-visible interruption (34–38 s) is shorter than the failover window (38–43 s):** the two numbers measure different endpoints. **T0→T4** is the full failover window — from the power loss (T0) until the observer confirms the new primary is fully promoted and pgpool has re-attached it (T4). The **client-visible write interruption** is measured from the *writer's* last successful commit to its *next* successful commit through the VIP. Because pgpool keeps serving reads and the writer's next commit can land on the new primary as soon as it is writable (before pgpool's final re-attach bookkeeping completes), the client-visible gap is a few seconds shorter than the full T0→T4 window. Both are reported so you can plan client retry timeouts against the larger (T0→T4) number.
 
@@ -458,7 +458,7 @@ patronictl -c /etc/patroni/patroni.yml history maruf
 
 Each row records **when** leadership moved, **from whom** to **whom**, and the **LSN** (log sequence number) at the switch. You can always answer "who was primary, when, and why did it change?" — observability a standalone database simply does not have.
 
-**Lag.** Lag is how far behind a replica is from the primary (in WAL bytes). `maximum_lag_on_failover` (default 1 MB in this repo) tells Patroni: *"do not promote a replica that is more than this far behind."* This is a **data-safety guarantee**: Patroni will never promote a replica that would lose committed transactions.
+**Lag.** Lag is how far behind a replica is from the primary (in WAL bytes). `maximum_lag_on_failover` (default 1 MB in this deployment) tells Patroni: *"do not promote a replica that is more than this far behind."* This is a **data-safety guarantee**: Patroni will never promote a replica that would lose committed transactions.
 
 ### The measured numbers (real fault injection, kernel-level VMs)
 
@@ -509,29 +509,28 @@ patronictl -c /etc/patroni/patroni.yml switchover maruf --master db2 --candidate
 
 This is a **graceful** operation (zero data loss), used for planned maintenance or to "return home" after a failover.
 
-### How to configure it in this repository
+### How to configure it
 
-In `03_Configure_Patroni.yml`, every node currently gets identical tags (no `failover_priority` — all three are equally preferred). To make db1 the preferred primary, add:
+In the `patroni.yml` from Phase 3, every node currently gets identical tags (no `failover_priority` — all three are equally preferred). To make db1 the preferred primary, add a `failover_priority` to the `tags:` block on each node:
 
 ```yaml
-# Inside the "Create Patroni configuration file" task, in the tags: block
+# In /etc/patroni/patroni.yml, inside the tags: block
+# db1 -> 100, db2 -> 50, db3 -> 0 (never primary)
 tags:
     nofailover: false
     noloadbalance: false
     clonefrom: false
     nosync: false
-    # Higher = more preferred to become primary.
-    # db1 (node_index 1) -> 100, db2 -> 50, db3 -> 0 (never primary).
-    failover_priority: "{{ 100 if node_index == 1 else (50 if node_index == 2 else 0) }}"
+    failover_priority: 100   # db1; use 50 on db2, 0 on db3
 ```
 
-Or, for explicit per-host control, via a `failover_priority_map` in `variables.yaml` (e.g. `patroni-1: 100`, `patroni-2: 50`, `patroni-3: 0`) referenced in the same tags block.
+Or, for explicit per-host control, use a per-host map (e.g. `db1: 100`, `db2: 50`, `db3: 0`) and set each node's `failover_priority` from it.
 
 > **Note:** `failover_priority` is a **dynamic** DCS setting read from etcd, so you can also change it at runtime with `patronictl edit-config` — no full redeploy needed. Verify with `patronictl list` / `patronictl show-config maruf`.
 
 ### pgpool-II? It follows Patroni.
 
-pgpool-II does **not** need to know about `failover_priority`. It simply routes writes to whatever node Patroni says is primary (via `sr_check` + the `on_role_change` callback). Once Patroni steers leadership back to db1, pgpool automatically follows — the VIP keeps serving, the app sees no change. If you also want the **pgpool watchdog leader** (VIP owner) to prefer db1, raise its `wd_priority` via `wd_priority_base` in `variables.yaml` — independent of the PostgreSQL primary, but keeping both on the same node reduces cross-node hops.
+pgpool-II does **not** need to know about `failover_priority`. It simply routes writes to whatever node Patroni says is primary (via `sr_check` + the `on_role_change` callback). Once Patroni steers leadership back to db1, pgpool automatically follows — the VIP keeps serving, the app sees no change. If you also want the **pgpool watchdog leader** (VIP owner) to prefer db1, raise its `wd_priority` (the per-node value in the pgpool watchdog config from Phase 4) — independent of the PostgreSQL primary, but keeping both on the same node reduces cross-node hops.
 
 ### Caveats — be honest about expectation
 
@@ -545,7 +544,7 @@ pgpool-II does **not** need to know about `failover_priority`. It simply routes 
 
 ## 9. Manual Deployment Steps (Full Guide)
 
-This is the **complete, hand-by-hand path** — the same steps the Ansible playbooks automate, but done manually so you understand exactly what is happening under the hood. Every config file below is the **full, working version** (matching what the playbooks deploy), not a representative excerpt.
+This is the **complete, hand-by-hand path** — every step needed to build the cluster from scratch, so you understand exactly what is happening under the hood. Every config file below is the **full, working version**, not a representative excerpt.
 
 ### What you need before you start
 
@@ -557,8 +556,7 @@ This is the **complete, hand-by-hand path** — the same steps the Ansible playb
 | **Network** | 1 Gbps between nodes; a **free, unused IP** on your subnet for the VIP (`192.168.122.200` in this guide) |
 | **DNS / hosts** | All nodes resolve each other by hostname (via `/etc/hosts` or internal DNS) |
 | **Access** | Root (or sudo) on every node; a `postgres` system user exists (created by the packages) |
-| **Ansible (auto path only)** | Ansible 2.16+ on your workstation, SSH root access to all 4 nodes |
-| **Secrets** | All passwords from `variables.yaml` (see §13) ready before you start |
+| **Secrets** | Choose strong passwords for every `CHANGE_ME_*` placeholder before you start (see §11 for the full list) |
 
 > All commands in this section run as **root** unless stated otherwise. Run on **all nodes** unless a phase says otherwise.
 
@@ -577,12 +575,7 @@ This is the **complete, hand-by-hand path** — the same steps the Ansible playb
 | **Pgpool package** | `percona-pgpool-II-pg16` (4.7) | **PGDG `pgpool2` 4.7.2** + `postgresql-16-pgpool2` |
 | Postgres user home | `/var/lib/pgsql` | `/var/lib/postgresql` |
 
-> 📄 **The manual path needs the repository.** Several scripts referenced below (`failover.sh`, `follow_master.sh`, `reattach_nodes.sh`, `pgpool_role_signal.sh`, `patroni_self_heal.sh`, `cluster_health.sh`) are long and battle-tested; the complete working versions live **inline in the playbooks** (`04_Configure_Pgpool.yml`, `03_Configure_Patroni.yml`, `06_Configure_Cluster_Health.yml`) and in `files/pgpool_role_signal.sh`. This guide shows the config and the outline; **copy the full scripts from the repository** for production rather than retyping them. If you don't have the repo yet, clone it first (on your workstation, or on a node that can reach the internet):
-> ```bash
-> git clone https://github.com/marufmoinuddin/patroni-pgpool-ansible.git
-> cd patroni-pgpool-ansible
-> ```
-> The phases below that need repo files tell you to run commands **from this directory** (the repo root).
+> 📄 **Everything you need is in this guide.** All config files AND all helper scripts (`wait_for_etcd.sh`, `pgpool_role_signal.sh`, `failover.sh`, `follow_master.sh`, `reattach_nodes.sh`, `patroni_self_heal.sh`, `cluster_health.sh`) are included inline below — no external repository or Ansible is required. Where a phase says "create the file", the full content is given in the block that follows.
 
 > 📝 **How to create the config files.** Throughout the phases, config files are shown as content blocks with a comment naming the target path (e.g. `# /etc/patroni/patroni.yml`). Create each file at that exact path with your editor, e.g. `vi /etc/patroni/patroni.yml` (paste the block, save, quit), or with a heredoc:
 > ```bash
@@ -594,11 +587,10 @@ This is the **complete, hand-by-hand path** — the same steps the Ansible playb
 
 > ⚠️ **Every `192.168.122.x` address below is an EXAMPLE.** Replace **all** of them with YOUR VMs' IPs and YOUR chosen VIP before copying any file — they appear in every config block (etcd, Patroni, pgpool, pgBackRest) and in the verification commands. If you leave them as-is, the cluster will deploy against the wrong addresses and Phase 8's `psql -h 192.168.122.200` will time out.
 
-> 🛡️ **The four classic self-inflicted failures (and their guards):**
+> 🛡️ **The three classic self-inflicted failures (and their guards):**
 > 1. **SSH lock-out** — `ufw --force enable` drops your SSH session unless you open port 22 first. Guard: the Phase 0 firewall block includes `ufw allow 22/tcp`.
 > 2. **Wrong example IPs** — typing `192.168.122.x` literally instead of your real addresses. Guard: replace every `192.168.122.x` (see the warning above).
 > 3. **Wrong NIC name** — copying `eth0`/`enp3s0` when your interface is different. Guard: run `ip link` first and use your real interface name everywhere (the pgpool watchdog blocks call this out).
-> 4. **Forgetting to clone the repo** — Phase 3 and Phase 7 copy scripts from it. Guard: run the `git clone` + `cd` in the note above before those phases.
 
 ---
 
@@ -684,7 +676,7 @@ apt install -y ./percona-release_latest.generic_all.deb
 # 3. Enable the PostgreSQL 16 Percona repository
 percona-release setup ppg-16
 
-# 4. Add the PGDG repo + key (pgpool-II 4.7 is installed in Phase 4, matching the playbooks)
+# 4. Add the PGDG repo + key (pgpool-II 4.7 is installed in Phase 4)
 #    pgpool-II comes from PGDG (apt.postgresql.org), NOT Percona
 wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /usr/share/keyrings/pgdg.gpg > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
@@ -700,7 +692,7 @@ apt install -y \
   docker.io
 ```
 
-> ⚠️ **Debian pgpool2 note:** pgpool-II is installed from **PGDG** (`apt.postgresql.org`) at **4.7.2**, not from the Percona repo (which ships no pgpool-II daemon for Debian). Remove any old apt pin (`/etc/apt/preferences.d/pgpool2`) that would force the native Debian 4.3.5 — the playbooks expect 4.7. `pg_stat_monitor` is skipped on Debian (no package).
+> ⚠️ **Debian pgpool2 note:** pgpool-II is installed from **PGDG** (`apt.postgresql.org`) at **4.7.2**, not from the Percona repo (which ships no pgpool-II daemon for Debian). Remove any old apt pin (`/etc/apt/preferences.d/pgpool2`) that would force the native Debian 4.3.5 — this guide expects 4.7. `pg_stat_monitor` is skipped on Debian (no package).
 
 ---
 
@@ -723,7 +715,7 @@ ETCD_INITIAL_CLUSTER_TOKEN="PostgreSQL_HA_Cluster_1"
 
 > 🔑 **Per-node values:** on **db2** set `ETCD_NAME="db2"`, `ETCD_ADVERTISE_CLIENT_URLS="http://192.168.122.151:2379"`, `ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.122.151:2380"`. On **db3** use `192.168.122.152`. Everything else stays identical.
 
-> 🔁 **`ETCD_INITIAL_CLUSTER_STATE`:** use `"new"` on the **first** bootstrap. On any later start (reboot, re-run) the data dir already exists — change it to `"existing"` or etcd will fail with a member/cluster-ID mismatch. (The playbooks derive this automatically from whether `/var/lib/etcd/member` exists.)
+> 🔁 **`ETCD_INITIAL_CLUSTER_STATE`:** use `"new"` on the **first** bootstrap. On any later start (reboot, re-run) the data dir already exists — change it to `"existing"` or etcd will fail with a member/cluster-ID mismatch.
 
 Create the systemd unit — **identical on all three nodes** (it reads each node's values from `/etc/etcd/etcd.conf` via `EnvironmentFile`):
 
@@ -759,7 +751,7 @@ WantedBy=multi-user.target
 EOF
 ```
 
-> ⚠️ **Persistence guard:** etcd's data dir (`/var/lib/etcd`) **must** be on persistent disk, not tmpfs/ramfs — otherwise the cluster brain is lost on every reboot. The playbooks refuse to run on volatile storage.
+> ⚠️ **Persistence guard:** etcd's data dir (`/var/lib/etcd`) **must** be on persistent disk, not tmpfs/ramfs — otherwise the cluster brain is lost on every reboot. Do not put it on volatile storage.
 
 Start etcd on all three nodes together (quorum needs 2/3), then verify:
 
@@ -777,7 +769,7 @@ ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 member list
 # and ETCD_INITIAL_CLUSTER_TOKEN values (a typo in one breaks the whole quorum).
 ```
 
-> 🔁 **Re-runs never wipe etcd.** Only a fresh bootstrap / DR restore wipes the data dir (equivalent to `etcd_force_reset: true` in the playbooks). Never `rm -rf /var/lib/etcd/*` on a healthy cluster.
+> 🔁 **Re-runs never wipe etcd.** Only a fresh bootstrap / DR restore wipes the data dir. Never `rm -rf /var/lib/etcd/*` on a healthy cluster.
 
 > ✅ **Done with etcd?** Phase 8 step 2 re-verifies quorum — run it after Phase 7.
 
@@ -785,7 +777,7 @@ ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 member list
 
 ### Phase 3 — Patroni + PostgreSQL (db1, db2, db3)
 
-> 🔑 **Replace every `CHANGE_ME_*` below with your real passwords before starting** (see §13 for the full mapping to `variables.yaml`). The `name` and the two `connect_address`/etcd host lines change per node.
+> 🔑 **Replace every `CHANGE_ME_*` below with your real passwords before starting** (see §12 for the full list). The `name` and the two `connect_address`/etcd host lines change per node.
 
 Create `/etc/patroni/patroni.yml` on **each** node. The structure is the same everywhere; only `name` and the two `connect_address`/etcd host lines change per node.
 
@@ -828,7 +820,7 @@ bootstrap:
         wal_log_hints: "on"
         wal_keep_size: "1GB"
         logging_collector: "on"
-        # max_wal_size is pgtune-calculated dynamically in the playbook (not a fixed 10GB)
+        # max_wal_size is pgtune-calculated dynamically (not a fixed 10GB)
         archive_mode: "off"
         archive_timeout: 600s
         # NOTE: no archive_command here — archiving is OFF by default. If you run
@@ -948,15 +940,130 @@ chmod 0755 /usr/local/sbin/wait_for_etcd.sh
 
 # 2. pgpool_role_signal.sh — Patroni on_role_change callback: on promotion,
 #    immediately run pcp_promote_node on every pgpool node (closes the ~4 min
-#    switchover detection gap). This file ships in the repository at
-#    files/pgpool_role_signal.sh — run the commands below from the REPO ROOT
-#    (the directory you cloned the repo into — see the §9 intro):
-cd ~/patroni-pgpool-ansible   # or wherever you cloned the repo
-cp files/pgpool_role_signal.sh /usr/local/sbin/pgpool_role_signal.sh
+#    switchover detection gap). Create it with the full script below.
+cat > /usr/local/sbin/pgpool_role_signal.sh <<'EOF'
+#!/bin/bash
+# pgpool_role_signal.sh - Patroni on_role_change callback.
+#
+# PURPOSE
+#   Signal pgpool immediately when Patroni promotes a node, instead of
+#   waiting for pgpool's periodic sr_check polling to notice the role
+#   change. Without this, a clean `patronictl switchover` left the
+#   write path pointing at the old primary for ~4 minutes.
+#
+# Patroni invokes callbacks as:  <cmd> <cb_type> <role> <scope>
+#   $1 = on_role_change
+#   $2 = primary | replica
+#   $3 = cluster scope
+#
+# SAFETY
+#   - Acts ONLY on promotion to primary (role=primary).
+#   - Confirms via patronictl that THIS node is the Patroni Leader.
+#   - Maps own IP -> pgpool backend node id and runs pcp_promote_node
+#     for that id on ALL pgpool nodes.
+#   - Idempotent: promoting an already-primary node is a no-op.
+#
+# Runs as postgres (the Patroni service user); uses .pcppass for PCP auth.
+
+set -u
+
+# Distro-aware pgpool config dir (RHEL/Percona: /etc/pgpool-II, Debian: /etc/pgpool2)
+if [ -d "/etc/pgpool-II" ]; then
+    PGCONF_DIR="/etc/pgpool-II"
+elif [ -d "/etc/pgpool2" ]; then
+    PGCONF_DIR="/etc/pgpool2"
+else
+    PGCONF_DIR="/etc/pgpool-II"
+fi
+
+PCP_PORT=9898
+PCP_USER=pgpool_pcp
+export PCPPASSFILE="$PGCONF_DIR/.pcppass"
+LOG_DIR="/var/log/pgpool"
+[ -d "$LOG_DIR" ] || LOG_DIR="/tmp"
+LOG_FILE="$LOG_DIR/role_signal.log"
+
+log() { echo "$(date '+%Y-%m-%d %H:%M:%S%z') $*" >> "$LOG_FILE"; }
+
+CB="${1:-}"
+ROLE="${2:-}"
+SCOPE="${3:-}"
+
+# Only react to a promotion to primary.
+if [ "$CB" != "on_role_change" ] || [ "$ROLE" != "primary" ]; then
+    exit 0
+fi
+
+log "on_role_change fired: cb=$CB role=$ROLE scope=$SCOPE"
+
+# 1. Authoritative check: Patroni must name THIS node the Leader.
+MY_HOST=$(hostname -s)
+
+LEADER_JSON=$(patronictl -c /etc/patroni/patroni.yml list -f json 2>/dev/null | jq -c '.[] | select(.Role == "Leader")' | head -1)
+if [ -z "$LEADER_JSON" ]; then
+    log "WARN: cannot determine Patroni Leader - skipping (reattach timer will catch up)"
+    exit 0
+fi
+LEADER_IP=$(echo "$LEADER_JSON" | jq -r '.Host')
+LEADER_MEMBER=$(echo "$LEADER_JSON" | jq -r '.Member')
+
+if [ "$LEADER_MEMBER" != "$MY_HOST" ]; then
+    log "INFO: this node ($MY_HOST) is not the Patroni Leader ($LEADER_MEMBER@$LEADER_IP) - skipping"
+    exit 0
+fi
+log "confirmed: this node is Patroni Leader $LEADER_MEMBER ($LEADER_IP)"
+
+# 2. Map own host/IP -> pgpool backend node id from pgpool.conf.
+NODE_ID=""
+CONF="$PGCONF_DIR/pgpool.conf"
+MY_IPS=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -v '^$')
+for idx in $(seq 0 9); do
+    HOST=$(grep -E "^backend_hostname${idx}[[:space:]]*=" "$CONF" 2>/dev/null | sed -E "s/.*=\s*'([^']+)'.*/\1/")
+    if [ -n "$HOST" ]; then
+        for ip in $MY_IPS; do
+            if [ "$HOST" = "$ip" ] || [ "$HOST" = "$MY_HOST" ]; then
+                NODE_ID=$idx
+                break 2
+            fi
+        done
+    fi
+done
+if [ -z "$NODE_ID" ]; then
+    log "ERROR: cannot map $MY_IP/$MY_HOST to a pgpool backend node id in $CONF"
+    exit 1
+fi
+log "own pgpool backend node id: $NODE_ID"
+
+# 2b. If pgpool still marks this node down but the backend is up, attach first.
+LINE=$(pcp_node_info -h localhost -p $PCP_PORT -U $PCP_USER -w "$NODE_ID" 2>/dev/null)
+if [ -n "$LINE" ]; then
+    STATUS=$(echo "$LINE" | awk '{print $5}')
+    PG_STATUS=$(echo "$LINE" | awk '{print $6}')
+    if [ "$STATUS" = "down" ] && [ "$PG_STATUS" = "up" ]; then
+        log "node $NODE_ID marked down but backend up - attaching first"
+        pcp_attach_node -h localhost -p $PCP_PORT -U $PCP_USER -w "$NODE_ID" >> "$LOG_FILE" 2>&1
+    fi
+fi
+
+# 3. Promote this node id on ALL pgpool nodes (local + peers).
+PGPOOL_HOSTS=$(grep -E "^backend_hostname[0-9]+[[:space:]]*=" "$CONF" 2>/dev/null | sed -E "s/.*=\s*'([^']+)'.*/\1/" | sort -u)
+[ -z "$PGPOOL_HOSTS" ] && PGPOOL_HOSTS="localhost"
+
+for phost in $PGPOOL_HOSTS; do
+    log "pcp_promote_node $NODE_ID -> pgpool $phost (leader=$LEADER_MEMBER)"
+    if timeout 10 pcp_promote_node -h "$phost" -p $PCP_PORT -U $PCP_USER -w "$NODE_ID" >> "$LOG_FILE" 2>&1; then
+        log "  ok: promote accepted on $phost"
+    else
+        rc=$?
+        log "  warn: promote on $phost returned rc=$rc (pgpool may already be consistent)"
+    fi
+done
+
+log "done: routing role corrected to node $NODE_ID on pgpool hosts: $PGPOOL_HOSTS"
+exit 0
+EOF
 chown postgres:postgres /usr/local/sbin/pgpool_role_signal.sh
 chmod 0755 /usr/local/sbin/pgpool_role_signal.sh
-#    (If you do NOT have the repo, skip this step — the cluster still works,
-#    but clean switchovers fall back to the slower ~4 min sr_check polling.)
 ```
 
 #### Initialize PostgreSQL + systemd unit
@@ -1067,7 +1174,7 @@ patronictl -c /etc/patroni/patroni.yml list
 
 ### Phase 4 — pgpool-II + Watchdog + VIP (db1, db2, db3)
 
-> 🔑 **Replace every `CHANGE_ME_*` below with the same passwords you used in Phase 3** (`CHANGE_ME_HEALTH` = the `pgpool` user's password, `CHANGE_ME_WD_AUTH` = `watchdog_authkey`, etc. — see §13). The `wd_authkey` must be **identical on all three nodes**.
+> 🔑 **Replace every `CHANGE_ME_*` below with the same passwords you used in Phase 3** (`CHANGE_ME_HEALTH` = the `pgpool` user's password, `CHANGE_ME_WD_AUTH` = `watchdog_authkey`, etc. — see §12). The `wd_authkey` must be **identical on all three nodes**.
 
 > 📋 **Config directory and package version differences:**
 > - **RHEL/CentOS:** `/etc/pgpool-II`, pgpool-II 4.7 (Percona package), watchdog in **separate `pgpool_watchdog.conf`**
@@ -1216,7 +1323,7 @@ arping_cmd = '/usr/sbin/arping -U 192.168.122.200 -w 1 -I eth0'
 
 #### Debian/Ubuntu (pgpool-II 4.7) — Inline Watchdog Config
 
-First install pgpool-II 4.7 from PGDG (pinned, matching the playbooks):
+First install pgpool-II 4.7 from PGDG (pinned):
 
 ```bash
 # On each DB node — install pgpool-II 4.7.2 from PGDG (repo added in Phase 1)
@@ -1402,8 +1509,8 @@ pgpool:CHANGE_ME_PGPOOL
 postgres:CHANGE_ME_POSTGRES
 EOF
 
-# pcp.conf — MD5-hashed password (pgpool 4.x). Use the Ansible hash('md5') filter
-# (not shell pg_md5) so passwords with shell metacharacters like '$' hash correctly.
+# pcp.conf — MD5-hashed password (pgpool 4.x). Use md5sum (not shell pg_md5)
+# so passwords with shell metacharacters like '$' hash correctly.
 # Manual alternative:  pg_md5 -p -u pgpool_pcp
 echo "pgpool_pcp:$(printf '%s' 'CHANGE_ME_PCP' | md5sum | awk '{print $1}')" > /etc/pgpool-II/pcp.conf
 
@@ -1559,7 +1666,127 @@ chmod +x /etc/pgpool-II/failover.sh /etc/pgpool-II/follow_master.sh
 chown postgres:postgres /etc/pgpool-II/failover.sh /etc/pgpool-II/follow_master.sh
 ```
 
-> 📄 **Optional hardening:** the repository's `04_Configure_Pgpool.yml` also ships a `reattach_nodes.sh` + `pgpool-reattach.timer` that periodically re-attach recovered backends and correct routing-role mismatches. It is optional — copy it from the playbook if you want it.
+> 📄 **Optional hardening — auto-reattach timer.** pgpool never re-attaches a backend node that comes back after being marked down during a failover. The script below periodically re-attaches recovered backends and corrects routing-role mismatches (only when Patroni confirms the node is the Leader). It is optional but recommended. Create it and its systemd timer:
+
+```bash
+# /etc/pgpool-II/reattach_nodes.sh  (RHEL path; Debian: /etc/pgpool2/reattach_nodes.sh)
+cat > /etc/pgpool-II/reattach_nodes.sh <<'EOF'
+#!/bin/bash
+# Re-attach pgpool backend nodes that have recovered but are still marked
+# down by pgpool, and correct routing-role mismatches when pgpool's routing
+# role diverges from the actual Patroni primary (pg_role).
+# Runs as postgres (systemd timer), uses .pcppass for PCP auth.
+#
+# SAFETY (Case 2 role correction) - hardened against thrash:
+#   - Acts ONLY when Patroni (the authoritative leader source) confirms
+#     this node is the Leader.
+#   - Requires the same mismatch to be stable across 2 consecutive timer
+#     runs (state file).
+#   - Performs at most ONE correction per run.
+
+PCP_PORT=9898
+PCP_USER=pgpool_pcp
+export PCPPASSFILE=/etc/pgpool-II/.pcppass
+LOG_FILE="/var/log/pgpool/reattach.log"
+STATE_FILE="/var/log/pgpool/reattach_state"
+
+# Authoritative Patroni leader - the single source of truth.
+PATRONI_LEADER_IP=""
+PATRONI_LEADER_MEMBER=""
+PATRONI_LEADER_JSON=$(patronictl -c /etc/patroni/patroni.yml list -f json 2>/dev/null | jq -c '.[] | select(.Role == "Leader")' | head -1)
+if [ -n "$PATRONI_LEADER_JSON" ]; then
+    PATRONI_LEADER_IP=$(echo "$PATRONI_LEADER_JSON" | jq -r '.Host')
+    PATRONI_LEADER_MEMBER=$(echo "$PATRONI_LEADER_JSON" | jq -r '.Member')
+fi
+if [ -n "$PATRONI_LEADER_MEMBER" ]; then
+    echo "$(date): Patroni Leader confirmed: $PATRONI_LEADER_MEMBER ($PATRONI_LEADER_IP)"
+else
+    echo "$(date): WARN - could not determine Patroni Leader, skipping Case 2 role corrections this run"
+fi
+
+# Number of backends to check (3 in this cluster)
+NUM_BACKENDS=3
+NEW_MISMATCH=0
+for idx in $(seq 0 $(( NUM_BACKENDS - 1 ))); do
+    LINE=$(pcp_node_info -h localhost -p $PCP_PORT -U $PCP_USER -w $idx 2>/dev/null)
+    [ -z "$LINE" ] && continue
+    # fields: host port status_code weight status pg_status role pg_role ...
+    STATUS=$(echo "$LINE" | awk '{print $5}')
+    PG_STATUS=$(echo "$LINE" | awk '{print $6}')
+    ROLE=$(echo "$LINE" | awk '{print $7}')
+    PG_ROLE=$(echo "$LINE" | awk '{print $8}')
+    HOST=$(echo "$LINE" | awk '{print $1}')
+
+    # Case 1: backend recovered (pg_status=up) but pgpool marks it down
+    if [ "$STATUS" = "down" ] && [ "$PG_STATUS" = "up" ]; then
+        echo "$(date): Re-attaching node $idx ($HOST) - backend up, pgpool marked down"
+        pcp_attach_node -h localhost -p $PCP_PORT -U $PCP_USER -w $idx >> "$LOG_FILE" 2>&1
+        continue
+    fi
+
+    # Case 2: routing role is stale. Requires ALL of:
+    #   1. backend up and pgpool marks it up
+    #   2. sr_check says pg_role=primary
+    #   3. routing role != primary (the mismatch)
+    #   4. Patroni authoritatively confirms THIS node is Leader
+    #   5. same mismatch seen on the previous run (stability)
+    if [ "$STATUS" = "up" ] && [ "$PG_STATUS" = "up" ] && \
+       [ "$PG_ROLE" = "primary" ] && [ "$ROLE" != "primary" ] && \
+       [ "$HOST" = "$PATRONI_LEADER_IP" ]; then
+        if grep -q "^MISMATCH:$idx$" "$STATE_FILE" 2>/dev/null; then
+            echo "$(date): Correcting routing role - node $idx ($HOST) confirmed Patroni Leader ($PATRONI_LEADER_MEMBER), mismatch stable across 2 runs"
+            pcp_promote_node -h localhost -p $PCP_PORT -U $PCP_USER -w $idx >> "$LOG_FILE" 2>&1
+            echo "$(date): Role correction performed - exiting (one correction per run)"
+            : > "$STATE_FILE"
+            exit 0
+        else
+            echo "$(date): Node $idx ($HOST) pg_role=primary but routing role=$ROLE - mismatch observed, awaiting confirmation run"
+            echo "MISMATCH:$idx" > "$STATE_FILE"
+            NEW_MISMATCH=1
+        fi
+    fi
+done
+
+# No stable mismatch recorded this run - reset state
+if [ "$NEW_MISMATCH" -eq 0 ]; then
+    : > "$STATE_FILE"
+fi
+exit 0
+EOF
+chown postgres:postgres /etc/pgpool-II/reattach_nodes.sh
+chmod 0755 /etc/pgpool-II/reattach_nodes.sh
+
+# systemd service + timer (runs every 15 s)
+cat > /etc/systemd/system/pgpool-reattach.service <<'EOF'
+[Unit]
+Description=Re-attach recovered pgpool backend nodes
+After=network.target
+
+[Service]
+Type=oneshot
+User=postgres
+Group=postgres
+ExecStart=/etc/pgpool-II/reattach_nodes.sh
+EOF
+
+cat > /etc/systemd/system/pgpool-reattach.timer <<'EOF'
+[Unit]
+Description=Periodically re-attach recovered pgpool backend nodes
+
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=15
+Unit=pgpool-reattach.service
+
+[Install]
+WantedBy=timers.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now pgpool-reattach.timer
+```
+
+> 📋 On Debian, change `/etc/pgpool-II` → `/etc/pgpool2` and `/var/log/pgpool` → `/var/log/pgpool2` inside the script and the service unit.
 
 #### systemd override (VIP capabilities + fast stop + self-heal)
 
@@ -1625,7 +1852,7 @@ ip addr show eth0 | grep 192.168.122.200    # RHEL (or your NIC)
 # ip addr show enp3s0 | grep 192.168.122.200  # Debian (predictable NIC name)
 ```
 
-> 🔁 **Auto-reattach (optional):** the playbooks also deploy a `pgpool-reattach.timer` that periodically re-attaches recovered backend nodes and corrects routing-role mismatches. It is optional — copy `reattach_nodes.sh` + the timer unit from `04_Configure_Pgpool.yml` if you want it.
+> 🔁 **Auto-reattach (optional):** the `pgpool-reattach.timer` (created in the "Optional hardening" step above) periodically re-attaches recovered backend nodes and corrects routing-role mismatches. It is optional but recommended.
 
 > ✅ **Done with pgpool?** Phase 8 steps 3–4 re-verify the watchdog/VIP and the connection through it — run them after Phase 7.
 
@@ -1666,7 +1893,7 @@ backup-standby = y
 protocol-timeout = 30
 
 [maruf]
-pg1-host = db1                          # hostname (the playbook uses node fqdn)
+pg1-host = db1                          # hostname (must resolve via /etc/hosts)
 pg1-host-user = postgres
 pg1-port = 5432
 pg1-path = /postgres/data/16/maruf      # DEBIAN PATH — change for RHEL
@@ -1734,7 +1961,7 @@ sudo -iu postgres pgbackrest --stanza=maruf info
 
 ### Phase 6 — PMM (optional, backup node `.153` + PG nodes) — disabled by policy
 
-> ⚠️ **PMM is disabled by policy** in `site.yml` (play 07 is commented out). The steps below are for reference if you re-enable it. The playbook installs the `pmm-client` package (not `pmm3-client`).
+> ⚠️ **PMM is optional and disabled by default in this guide.** The steps below are for reference if you enable it. The client package is `pmm-client` (not `pmm3-client`).
 
 #### RHEL / CentOS / Stream 9
 
@@ -1804,36 +2031,265 @@ pmm-admin add postgresql --username=pmm --password=CHANGE_ME --skip-connection-c
 
 ### Phase 7 — Cluster health & self-healing (db1, db2, db3)
 
-> ⚠️ **These two scripts come from the repository** (`06_Configure_Cluster_Health.yml`). If you are following the manual path **without** the repo checked out, copy them from a machine that has it (or from the playbook file) before continuing — the timers below will fail without them. The cluster itself works fine without this phase; it only adds self-healing + monitoring.
+This phase adds two optional-but-recommended systemd timers: **self-heal** (restarts a crashed local Patroni member) and **cluster-health** (monitors etcd quorum, the Patroni leader, pgpool watchdog quorum, backends, and the VIP every 60 s). The cluster works fine without this phase; it only adds resilience and visibility.
 
 ```bash
-# 0. These commands must run from the REPO ROOT (the directory you cloned the
-#    repo into — see the §9 intro for the clone command). The playbook file is
-#    referenced by relative path.
-cd ~/patroni-pgpool-ansible   # or wherever you cloned the repo
-
 # 1. patroni_self_heal.sh — restart a crashed/stopped/failed LOCAL Patroni member
-#    (NEVER the leader). Copy from 06_Configure_Cluster_Health.yml.
-cp 06_Configure_Cluster_Health.yml /tmp/06.yml
-#    Extract the script body from the playbook (between the copy task markers):
-sed -n '/patroni_self_heal.sh/,/^    - name: Deploy Patroni self-heal systemd service/p' /tmp/06.yml \
-  | sed '1d;$d' > /usr/local/sbin/patroni_self_heal.sh
+#    (NEVER the leader). Create it with the full script below.
+cat > /usr/local/sbin/patroni_self_heal.sh <<'EOF'
+#!/bin/bash
+# =============================================================================
+# Patroni self-heal: restart a crashed/stopped/failed LOCAL member.
+# NEVER restarts the leader. Remote crashed members are reported (and
+# optionally alerted) but NOT auto-reinitialized - reinit is a manual,
+# documented operation.
+# =============================================================================
+SCOPE="maruf"
+PATRONI_CFG="/etc/patroni/patroni.yml"
+LOG="/var/log/patroni/self_heal.log"
+LOCK="/var/run/patroni-self-heal.lock"
+ALERT_CMD=""   # optional: set to a command (e.g. a webhook curl) to get paged
+
+exec 9>"$LOCK"
+flock -n 9 || exit 0   # only one self-heal run at a time
+
+exec >> "$LOG" 2>&1
+
+HOSTNAME_SHORT=$(hostname -s)
+
+LIST=$(patronictl -c "$PATRONI_CFG" list -f json 2>/dev/null) || {
+  echo "$(date): patronictl failed - is etcd reachable?"
+  exit 1
+}
+
+echo "$(date): self-heal check on $HOSTNAME_SHORT"
+echo "$LIST" | jq -r '.[] | .Member + "|" + .Role + "|" + (.State // "")' | \
+while IFS='|' read -r member role state; do
+  [ "$member" = "$HOSTNAME_SHORT" ] || continue
+  case "$state" in
+    crashed|stopped|failed)
+      if [ "$role" = "Leader" ]; then
+        echo "$(date): WARN $member state=$state but is LEADER - refusing to restart (would force a failover / risk split-brain)"
+        continue
+      fi
+      echo "$(date): member $member state=$state -> restarting patroni"
+      systemctl restart patroni
+      ;;
+    *) ;;
+  esac
+done
+
+CRASHED=$(echo "$LIST" | jq -r '[.[] | select(.State == "crashed" or .State == "stopped" or .State == "failed")] | length' 2>/dev/null)
+if [ "${CRASHED:-0}" -gt 0 ]; then
+  BAD_MEMBERS=$(echo "$LIST" | jq -r '[.[] | select(.State == "crashed" or .State == "stopped" or .State == "failed") | .Member] | join(",")' 2>/dev/null)
+  echo "$(date): WARN $CRASHED member(s) in non-running state: $BAD_MEMBERS"
+  echo "$LIST" | jq -r '.[] | select(.State == "crashed" or .State == "stopped" or .State == "failed") | "  - " + .Member + " (" + .Role + ", " + .State + ")"'
+  if [ -n "$ALERT_CMD" ]; then
+    $ALERT_CMD "Patroni self-heal: $CRASHED member(s) non-running ($BAD_MEMBERS)"
+  fi
+fi
+
+exit 0
+EOF
 chmod 0755 /usr/local/sbin/patroni_self_heal.sh
 
 # 2. cluster_health.sh — checks etcd quorum, Patroni leader, pgpool watchdog
 #    quorum, backend status, VIP presence every 60s; writes Prometheus textfile
-#    metrics and fires health_alert_command on CRITICAL. Copy from 06 the same way:
-sed -n '/cluster_health.sh/,/^    - name: Deploy cluster health monitor systemd service/p' /tmp/06.yml \
-  | sed '1d;$d' > /usr/local/sbin/cluster_health.sh
-chmod 0755 /usr/local/sbin/cluster_health.sh
-#    (Set health_alert_command inside the script to get paged before an outage
-#    becomes permanent.)
+#    metrics and fires health_alert_command on CRITICAL. Create it below.
+#    NOTE: change VIP_IF to your real NIC (eth0 on RHEL, enp3s0/enp1s0 on
+#    Debian) and PCPPASS to /etc/pgpool2/.pcppass on Debian.
+cat > /usr/local/sbin/cluster_health.sh <<'EOF'
+#!/bin/bash
+# =============================================================================
+# Cluster health monitor: etcd quorum, Patroni leader, pgpool watchdog
+# quorum, backend status and VIP presence.
+#   - Writes /var/log/patroni/cluster_health.log
+#   - Writes Prometheus textfile metrics for PMM (if a textfile dir exists)
+#   - Fires the optional alert command when the cluster is CRITICAL
+#   - Exit code 0 = healthy, 1 = CRITICAL
+# =============================================================================
+SCOPE="maruf"
+PATRONI_CFG="/etc/patroni/patroni.yml"
+ETCD_ENDPOINTS="http://192.168.122.150:2379,http://192.168.122.151:2379,http://192.168.122.152:2379"
+VIP="192.168.122.200"
+VIP_IF="eth0"
+PCP_PORT=9898
+PCP_USER=pgpool_pcp
+PCPPASS=/etc/pgpool-II/.pcppass
+LOG="/var/log/patroni/cluster_health.log"
+ALERT_CMD=""   # optional: set to a command (e.g. a webhook curl) to get paged
+TEXTFILE_DIRS="/var/lib/pmm-node-exporter/textfile_collector /var/lib/node_exporter/textfile_collector /usr/local/percona/pmm2/collectors/textfile-collector"
 
-# ✅ Verify both scripts are non-empty (if the playbook markers change, the sed
-#    produces an empty file and the timers fail silently):
+CRITICAL=0
+NOW=$(date "+%Y-%m-%d %H:%M:%S")
+
+log() { echo "$NOW $*" >> "$LOG"; }
+
+# --- durable leader-election / false-positive event logging -----------
+EVENT_LOG="/var/log/patroni/leader_events.log"
+STATE_FILE="/var/log/patroni/cluster_health.state"
+
+PREV_LEADER=""; PREV_WRITABLE=1; PREV_QUORUM=1
+LEADER_CHANGES_TOTAL=0; READ_ONLY_EVENTS_TOTAL=0
+LEADER_LOST_TOTAL=0; ETCD_QUORUM_LOSS_TOTAL=0
+if [ -f "$STATE_FILE" ]; then
+  . "$STATE_FILE"
+fi
+
+event() { echo "$(date -Is) $*" >> "$EVENT_LOG"; }
+
+# --- etcd -------------------------------------------------------------
+ETCD_HEALTHY=0; ETCD_QUORUM=0; ETCD_UP=0; ETCD_TOTAL=0
+for ep in $(echo "$ETCD_ENDPOINTS" | tr ',' ' '); do
+  ETCD_TOTAL=$((ETCD_TOTAL + 1))
+  if ETCDCTL_API=3 etcdctl --endpoints="$ep" endpoint health >/dev/null 2>&1; then
+    ETCD_UP=$((ETCD_UP + 1))
+  fi
+done
+[ "$ETCD_UP" -ge 1 ] && ETCD_HEALTHY=1
+ETCD_NEED=$(( (ETCD_TOTAL / 2) + 1 ))
+[ "$ETCD_UP" -ge "$ETCD_NEED" ] && ETCD_QUORUM=1
+[ "$ETCD_QUORUM" -ne 1 ] && { CRITICAL=1; log "CRITICAL etcd quorum lost: $ETCD_UP/$ETCD_TOTAL healthy (need $ETCD_NEED)"; }
+
+# --- Patroni leader ---------------------------------------------------
+LEADER_PRESENT=0; LEADER_MEMBER=""; MEMBERS_TOTAL=0; MEMBERS_NONRUN=0
+LIST=$(patronictl -c "$PATRONI_CFG" list -f json 2>/dev/null)
+if [ -n "$LIST" ]; then
+  LEADER_MEMBER=$(echo "$LIST" | jq -r '[.[] | select(.Role == "Leader")][0].Member // ""' 2>/dev/null)
+  [ -n "$LEADER_MEMBER" ] && [ "$LEADER_MEMBER" != "null" ] && LEADER_PRESENT=1
+  MEMBERS_TOTAL=$(echo "$LIST" | jq -r 'length' 2>/dev/null || echo 0)
+  MEMBERS_NONRUN=$(echo "$LIST" | jq -r '[.[] | select(.State != "running" and .State != "streaming")] | length' 2>/dev/null || echo 0)
+fi
+[ "$LEADER_PRESENT" -ne 1 ] && { CRITICAL=1; log "CRITICAL no Patroni leader"; }
+
+# --- leader writability (DCS leader must actually accept writes) ---
+LEADER_WRITABLE=1; LEADER_HOST=""
+if [ "$LEADER_PRESENT" -eq 1 ]; then
+  LEADER_HOST=$(echo "$LIST" | jq -r '[.[] | select(.Role == "Leader")][0].Host // ""' 2>/dev/null)
+  if [ -n "$LEADER_HOST" ] && [ "$LEADER_HOST" != "null" ]; then
+    LEADER_ROLE=$(curl -s -m 5 "http://${LEADER_HOST}:8008/patroni" 2>/dev/null | jq -r '.role // "unknown"' 2>/dev/null)
+    [ -z "$LEADER_ROLE" ] && LEADER_ROLE="unknown"
+    if [ "$LEADER_ROLE" != "primary" ]; then
+      LEADER_WRITABLE=0
+      CRITICAL=1
+      log "CRITICAL leader $LEADER_MEMBER ($LEADER_HOST) is NOT writable (REST role=$LEADER_ROLE) - DCS leader but read-only"
+    fi
+  fi
+fi
+
+# --- durable event detection (leader changes / elections / false positives) ---
+if [ "$LEADER_PRESENT" -eq 1 ]; then
+  if [ -z "$PREV_LEADER" ]; then
+    event "leader_elected member=$LEADER_MEMBER writable=$LEADER_WRITABLE"
+    LEADER_CHANGES_TOTAL=$((LEADER_CHANGES_TOTAL + 1))
+  elif [ "$PREV_LEADER" != "$LEADER_MEMBER" ]; then
+    event "leader_changed from=$PREV_LEADER to=$LEADER_MEMBER writable=$LEADER_WRITABLE"
+    LEADER_CHANGES_TOTAL=$((LEADER_CHANGES_TOTAL + 1))
+  fi
+  if [ "$LEADER_WRITABLE" -eq 0 ] && [ "$PREV_WRITABLE" -ne 0 ]; then
+    event "false_positive leader=$LEADER_MEMBER not_writable role=$LEADER_ROLE"
+    READ_ONLY_EVENTS_TOTAL=$((READ_ONLY_EVENTS_TOTAL + 1))
+  fi
+  if [ "$LEADER_WRITABLE" -eq 1 ] && [ "$PREV_WRITABLE" -eq 0 ]; then
+    event "leader_writable_restored member=$LEADER_MEMBER"
+  fi
+else
+  if [ -n "$PREV_LEADER" ]; then
+    event "leader_lost previous=$PREV_LEADER"
+    LEADER_LOST_TOTAL=$((LEADER_LOST_TOTAL + 1))
+  fi
+fi
+
+# etcd quorum loss / recovery transitions
+if [ "$ETCD_QUORUM" -ne 1 ] && [ "$PREV_QUORUM" -eq 1 ]; then
+  event "etcd_quorum_lost up=$ETCD_UP total=$ETCD_TOTAL"
+  ETCD_QUORUM_LOSS_TOTAL=$((ETCD_QUORUM_LOSS_TOTAL + 1))
+fi
+if [ "$ETCD_QUORUM" -eq 1 ] && [ "$PREV_QUORUM" -ne 1 ]; then
+  event "etcd_quorum_restored up=$ETCD_UP total=$ETCD_TOTAL"
+fi
+
+# Persist state for next run
+cat > "$STATE_FILE" <<EOF
+PREV_LEADER="$LEADER_MEMBER"
+PREV_WRITABLE=$LEADER_WRITABLE
+PREV_QUORUM=$ETCD_QUORUM
+LEADER_CHANGES_TOTAL=$LEADER_CHANGES_TOTAL
+READ_ONLY_EVENTS_TOTAL=$READ_ONLY_EVENTS_TOTAL
+LEADER_LOST_TOTAL=$LEADER_LOST_TOTAL
+ETCD_QUORUM_LOSS_TOTAL=$ETCD_QUORUM_LOSS_TOTAL
+EOF
+
+# --- pgpool watchdog + backends ----------------------------------------
+WD_QUORUM=0
+export PCPPASSFILE="$PCPPASS"
+WD_INFO=$(pcp_watchdog_info -v -h localhost -p "$PCP_PORT" -U "$PCP_USER" -w 2>/dev/null)
+if echo "$WD_INFO" | grep -qi "quorum.*exist"; then
+  WD_QUORUM=1
+fi
+[ "$WD_QUORUM" -ne 1 ] && { CRITICAL=1; log "CRITICAL pgpool watchdog quorum lost"; }
+
+BACKENDS_TOTAL=0; BACKENDS_UP=0
+BACKENDS_TOTAL=$(pcp_node_count -h localhost -p "$PCP_PORT" -U "$PCP_USER" -w 2>/dev/null || echo 0)
+if [ "$BACKENDS_TOTAL" -gt 0 ]; then
+  for idx in $(seq 0 $((BACKENDS_TOTAL - 1))); do
+    LINE=$(pcp_node_info -h localhost -p "$PCP_PORT" -U "$PCP_USER" -w "$idx" 2>/dev/null)
+    STATUS=$(echo "$LINE" | awk '{print $5}')
+    [ "$STATUS" = "up" ] && BACKENDS_UP=$((BACKENDS_UP + 1))
+  done
+fi
+
+# --- VIP (informational - only the watchdog leader holds it) ---
+VIP_IFACE="$(ip -4 addr show | awk -v vip="$VIP" '/^[0-9]+:/ {iface=$2; gsub(/:/, "", iface)} index($0, vip) {print iface; exit}' || echo "$VIP_IF")"
+VIP_PRESENT=0
+if [ -n "$VIP_IFACE" ] && ip -4 addr show dev "$VIP_IFACE" 2>/dev/null | grep -Fq "$VIP"; then
+  VIP_PRESENT=1
+fi
+
+log "status: leader=$LEADER_MEMBER leader_writable=$LEADER_WRITABLE etcd=$ETCD_UP/$ETCD_TOTAL wd_quorum=$WD_QUORUM backends=$BACKENDS_UP/$BACKENDS_TOTAL vip=$VIP_PRESENT members=$MEMBERS_TOTAL nonrunning=$MEMBERS_NONRUN"
+if [ "$CRITICAL" -eq 1 ]; then
+  log "RESULT CRITICAL"
+else
+  log "RESULT OK"
+fi
+
+# --- Prometheus textfile metrics (PMM node_exporter scrape) --------------
+PROM="patroni_leader_present $LEADER_PRESENT
+patroni_leader{member=\"$LEADER_MEMBER\"} $LEADER_PRESENT
+patroni_leader_writable $LEADER_WRITABLE
+patroni_members_total $MEMBERS_TOTAL
+patroni_members_nonrunning $MEMBERS_NONRUN
+etcd_healthy $ETCD_HEALTHY
+etcd_quorum $ETCD_QUORUM
+pgpool_wd_quorum $WD_QUORUM
+pgpool_backends_total $BACKENDS_TOTAL
+pgpool_backends_up $BACKENDS_UP
+vip_present $VIP_PRESENT
+patroni_leader_changes_total $LEADER_CHANGES_TOTAL
+patroni_leader_read_only_events_total $READ_ONLY_EVENTS_TOTAL
+patroni_leader_lost_events_total $LEADER_LOST_TOTAL
+patroni_etcd_quorum_loss_total $ETCD_QUORUM_LOSS_TOTAL
+"
+for dir in $TEXTFILE_DIRS; do
+  [ -z "$dir" ] && continue
+  if [ -d "$dir" ]; then
+    echo "$PROM" > "$dir/cluster_health.prom" 2>/dev/null
+  fi
+done
+
+# --- alert hook -----------------------------------------------------------
+if [ "$CRITICAL" -eq 1 ] && [ -n "$ALERT_CMD" ]; then
+  $ALERT_CMD "CLUSTER CRITICAL: etcd_quorum=$ETCD_QUORUM leader=$LEADER_MEMBER leader_writable=$LEADER_WRITABLE wd_quorum=$WD_QUORUM backends=$BACKENDS_UP/$BACKENDS_TOTAL"
+fi
+
+exit "$CRITICAL"
+EOF
+chmod 0755 /usr/local/sbin/cluster_health.sh
+
+# ✅ Verify both scripts are non-empty:
 ls -l /usr/local/sbin/patroni_self_heal.sh /usr/local/sbin/cluster_health.sh
-#    Each should be several KB. If either is 0 bytes, the extraction failed —
-#    copy the script bodies from 06_Configure_Cluster_Health.yml by hand instead.
+#    Each should be several KB. If either is 0 bytes, the heredoc failed —
+#    re-run the cat command for that script.
 
 # 3. systemd timers
 cat > /etc/systemd/system/patroni-self-heal.service <<'EOF'
@@ -1886,8 +2342,6 @@ systemctl list-timers | grep -E 'patroni-self-heal|cluster-health'
 #    Both rows should show populated NEXT / LEFT / LAST columns (not "n/a").
 ```
 
-> 📄 The complete, working `patroni_self_heal.sh` and `cluster_health.sh` are inline in `06_Configure_Cluster_Health.yml` — copy them verbatim for production.
-
 ---
 
 ### Phase 8 — Post-deployment verification checklist
@@ -1918,79 +2372,7 @@ tail -f /var/log/patroni/cluster_health.log
 
 ---
 
-## 10. Automated Deployment (Ansible)
-
-**This is the recommended path.** One command deploys the whole cluster, and every playbook is **idempotent** — you can re-run it safely.
-
-### The four-step recipe
-
-```bash
-# 1. Clone
-git clone https://github.com/marufmoinuddin/patroni-pgpool-ansible.git
-cd patroni-pgpool-ansible
-
-# 2. Configure the inventory
-cp hosts.ini.example hosts.ini          # → edit the 4 node IPs
-# [pg_nodes]: 3 entries (.150/.151/.152); [pg_backrest]: 1 entry (.153)
-ssh-copy-id root@192.168.122.150       # ...and the other 3 nodes
-
-# 3. Configure + encrypt the secrets
-cp variables.yaml.example variables.yaml   # → fill in real passwords
-ansible-vault encrypt variables.yaml       # → recommended
-
-# 4. Deploy (~10–15 minutes)
-ansible-playbook -i hosts site.yml --syntax-check   # first: check it parses
-ansible-playbook -i hosts site.yml --ask-vault-pass   # this is the password you set in the previous step
-```
-
-Key variables you must change in `variables.yaml`: `patroni_scope` (cluster name, default `maruf`), `postgres_password`, `replicator_password`, `patroni_admin_password`, `percona_password`, `pgpool_password`, `pcp_password`, `pgpool_admin_password`, `watchdog_authkey`, `pmm_admin_password`, `pg_pmm_user_password` (all **strong random**), `vip_address` (`192.168.122.200`), and `vip_interface_override` (only if the auto-detected NIC is wrong — verify with `ip link`).
-
-> ⚠️ **Never commit `variables.yaml`** — it is in `.gitignore`. Only `variables.yaml.example` is committed. Details in §13.
-
-### Post-deployment checklist
-
-```bash
-# 1. Patroni cluster is green — one Leader, two Streaming, lag 0
-patronictl -c /etc/patroni/patroni.yml list
-
-# 2. etcd quorum healthy
-ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 endpoint health
-ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 member list
-
-# 3. pgpool watchdog elected a leader and owns the VIP
-pcp_watchdog_info -h localhost -p 9898 -U pgpool_pcp -w
-ip addr show eth0 | grep 192.168.122.200
-
-# 4. You can connect through the VIP (it will prompt for the postgres password
-#    you set in variables.yaml)
-psql -h 192.168.122.200 -p 9999 -U postgres -d postgres -c "SELECT 1;"
-
-# 5. Verify the pgBackRest stanza + first backup (play 05 runs stanza-create + full backup automatically)
-sudo -iu postgres pgbackrest --stanza=maruf info
-
-# 6. (Only if you re-enabled PMM) log into https://192.168.122.153:443 — PMM is disabled by policy by default
-```
-
-### The playbook sequence (plain English)
-
-| # | Playbook | What it does |
-|---|----------|--------------|
-| 01 | `01_Install_Percona.yml` | Adds the Percona repository, enables EPEL + CRB (RHEL), installs PostgreSQL 16, Patroni, etcd, pgBackRest, jq — and **purges old/broken installs** so you start clean. **On RHEL** it also installs `percona-pgpool-II-pg16` (base). **On Debian** it purges any old `pgpool2`/`libpgpool2` packages and only adds the PGDG repo — pgpool-II 4.7 is installed later from PGDG in playbook 04. |
-| 02 | `02_Configure_Etcd.yml` | Writes the etcd config on all 3 nodes, starts etcd, verifies quorum. Only wipes etcd data when `etcd_force_reset: true` (fresh bootstrap / DR) — re-runs on a healthy cluster never wipe the DCS. |
-| 03 | `03_Configure_Patroni.yml` | Writes `patroni.yml` (full HA config, pgtune-calculated parameters, watchdog, callbacks), installs the systemd unit with an `ExecStartPre` that waits for etcd, **starts the primary first**, waits, then starts replicas — then verifies with `patronictl list`. Also deploys the `pgpool_role_signal.sh` `on_role_change` callback (fresh installs). |
-| 04 | `04_Configure_Pgpool.yml` | Adds the PGDG repo and installs pgpool-II 4.7 (Debian), writes `pgpool.conf` + **OS-conditional watchdog config** (CentOS: separate `pgpool_watchdog.conf`; Debian: inline params — both 4.7), `pool_hba.conf` + `pool_passwd` + `pcp.conf`, deploys Patroni-aware `failover.sh` / `follow_master.sh`, sets `pgpool_node_id`, and starts the watchdog cluster so the VIP is claimed. Also deploys the `pgpool-reattach.timer` (15 s) that re-attaches recovered backends. **Auto-detects the VIP interface.** |
-| 05 | `05_Configure_Pgbackrest.yml` | Installs/connects pgBackRest on the backup node, exchanges SSH keys with all PG nodes, writes `pgbackrest.conf` with stanza `maruf`, and **runs `stanza-create` + an initial `--type=full backup` automatically** (printing the equivalent manual commands as a fallback). |
-| 06 | `06_Configure_Cluster_Health.yml` | Deploys the self-healing timers (`patroni-self-heal.timer` every 30 s, `cluster-health.timer` every 60 s), the health log, Prometheus textfile metrics, an alert command hook, and the durable leader-event log. |
-| 07 | `07_Install_Pmm_Monitoring.yml` | Runs the PMM Server Docker container on the backup node (cleans stale `pmm-data` first), opens the firewall, installs PMM Client on all 3 PG nodes (skips `pg_stat_monitor` on Debian), registers them. **Disabled by policy — not imported by `site.yml`.** |
-| Optional | `Optional_Configure_Switchover_Signal.yml` | Deploys `pgpool_role_signal.sh` as Patroni's `on_role_change` callback — on promotion to primary, it confirms the node holds the DCS leader lease, maps the IP to a pgpool backend node_id, and runs `pcp_promote_node` on **all** pgpool nodes. This is the fix that eliminated the ~4-minute switchover detection gap (now ~3–4 s). **Baked into `03_Configure_Patroni.yml` for fresh installs; this playbook is only needed to retrofit an existing cluster. Not imported by `site.yml`.** |
-
-> **What `site.yml` actually runs:** playbooks **01–06**. PMM (07) is **disabled by policy** (commented out in `site.yml` — see §16), and the switchover-signal playbook is **optional** (the fix is already baked into 03 for fresh installs).
-
-**Rerunning safely:** every playbook is idempotent. If something failed midway, fix it and re-run `ansible-playbook -i hosts site.yml`. Re-runs no longer wipe etcd — only `etcd_force_reset: true` does.
-
----
-
-## 11. Operations (Day-2)
+## 10. Operations (Day-2)
 
 ### Patroni (run on any node)
 
@@ -2053,7 +2435,7 @@ sudo -iu postgres pgbackrest --stanza=maruf --type=time --target="2026-08-07 12:
 - **Web UI:** `https://192.168.122.153:443` — PostgreSQL overview, replication graphs, query analytics (pg_stat_monitor).
 - **CLI from any PG node:** `pmm-admin list`, `pmm-admin status`, `pmm-admin add postgresql`.
 
-### Health & self-healing (installed by playbook 06)
+### Health & self-healing (installed in Phase 7)
 
 | Timer | Interval | What it does |
 |-------|----------|--------------|
@@ -2073,7 +2455,7 @@ tail -f /var/log/patroni/leader_events.log        # durable, ISO-8601 event log 
                                                   # and etcd quorum loss/restore
 ```
 
-Set `health_alert_command` (e.g. a webhook curl) in `variables.yaml` to get paged *before* an outage becomes permanent.
+Set `health_alert_command` (e.g. a webhook curl) inside `cluster_health.sh` (Phase 7) to get paged *before* an outage becomes permanent.
 
 ### Restore from pgBackRest (disaster recovery)
 
@@ -2100,7 +2482,7 @@ patronictl -c /etc/patroni/patroni.yml list     # one Leader, two Streaming
 sudo -iu postgres pgbackrest --stanza=maruf info
 ```
 
-> 📋 **Point-in-time restore (PITR):** to restore to a specific moment (not the latest backup), use `--type=time --target="YYYY-MM-DD HH:MM:SS"` instead of a plain restore. This requires the WAL archive to be complete up to that point (see §11 Backups). For a full-cluster DR, restore to one node, promote it, then let the others rejoin.
+> 📋 **Point-in-time restore (PITR):** to restore to a specific moment (not the latest backup), use `--type=time --target="YYYY-MM-DD HH:MM:SS"` instead of a plain restore. This requires the WAL archive to be complete up to that point (see §10 Backups). For a full-cluster DR, restore to one node, promote it, then let the others rejoin.
 
 ### Upgrade path
 
@@ -2203,75 +2585,73 @@ systemctl disable patroni pgpool pgpool2 etcd
 
 ---
 
-## 12. Production Recommendations
+## 11. Production Recommendations
 
-1. **Verify the VIP interface** — the playbook **auto-detects** the default NIC (`eth0` on CentOS Stream 9, `enp3s0`/`enp1s0` on Debian 12). If that's wrong, set `vip_interface_override` in `variables.yaml` (check `ip link` first).
+1. **Verify the VIP interface** — the deployment **auto-detects** the default NIC (`eth0` on CentOS Stream 9, `enp3s0`/`enp1s0` on Debian 12). If that's wrong, set `vip_interface_override` in the pgpool watchdog config (check `ip link` first).
 2. **Tune failover timing** — defaults (`ttl: 30`, `loop_wait: 10`) give ~40 s failover. For faster failover, lower `ttl` to 15–20 s (keep it comfortably above `loop_wait`). Remember: a higher `ttl` also means *longer* downtime before a failover completes — that is the "wait for preferred leader" knob.
 3. **Set `maximum_lag_on_failover` sensibly** — 1 MB (current default) is conservative; consider 100 MB–1 GB for busy workloads so a slightly-lagged replica can still be promoted.
-4. **WAL retention** — the playbook already sets `wal_keep_size: 1GB` (PG 16); no need for the legacy `wal_keep_segments`.
-5. **Separate disks** — put `/postgres/data` and `/var/lib/etcd` on dedicated NVMe/SSD storage; etcd is latency-sensitive. (The playbooks refuse to run when etcd/PostgreSQL data sits on volatile tmpfs/ramfs.)
-6. **Automate backups** — play 05 runs the initial `stanza-create` + full backup automatically; in production schedule the ongoing ones:
+4. **WAL retention** — the config already sets `wal_keep_size: 1GB` (PG 16); no need for the legacy `wal_keep_segments`.
+5. **Separate disks** — put `/postgres/data` and `/var/lib/etcd` on dedicated NVMe/SSD storage; etcd is latency-sensitive. (Do not put them on volatile tmpfs/ramfs.)
+6. **Automate backups** — the initial `stanza-create` + full backup is taken in Phase 5; in production schedule the ongoing ones:
    ```bash
    # cron on the backup node
    0 1 * * * sudo -iu postgres pgbackrest --stanza=maruf --type=incr backup
    ```
-7. **Test failover monthly** — a HA cluster you never test is a false promise. Use the harness in `tests/` (run from your workstation, not the DB nodes).
-8. **Monitor the monitors** — PMM alerting should include: Patroni node down, etcd quorum lost, replica lag, backup age (add an archive-staleness/backlog check — see §16), VIP owner changes.
-9. **Keep the deployment reproducible** — the whole point of this repo: one `ansible-playbook` run rebuilds the world. Store your customized `hosts` + vars in Git (secrets in Vault).
+7. **Test failover monthly** — a HA cluster you never test is a false promise. Kill the primary (or run `patronictl switchover`) and verify the cluster recovers and the VIP moves.
+8. **Monitor the monitors** — PMM alerting should include: Patroni node down, etcd quorum lost, replica lag, backup age (add an archive-staleness/backlog check — see §15), VIP owner changes.
+9. **Keep the deployment reproducible** — keep your config files and passwords in a safe place so you can rebuild the cluster if needed.
 10. **Back up the etcd data too** — etcd holds the cluster brain (`/percona_lab/maruf/*`). A full backup strategy includes `etcdctl snapshot save`.
 
 ---
 
-## 13. Security
+## 12. Security
 
 ### Secrets
 
-All secrets live in **`variables.yaml`** (never in the playbooks):
+All secrets are the `CHANGE_ME_*` placeholders in the config files from §9. Replace **every** one with a strong random password before going live:
 
-| Variable in `variables.yaml` | Purpose | Production value |
-|-------------------------------|---------|------------------|
-| `postgres_password` | PostgreSQL superuser | **Strong random** |
-| `replicator_password` | Streaming replication user | **Strong random** |
-| `patroni_admin_password` | Patroni REST API admin | **Strong random** |
-| `percona_password` | Percona monitoring user | **Strong random** |
-| `pgpool_password` | pgpool monitoring user | **Strong random** |
-| `pcp_password` | Pgpool PCP admin | **Strong random** |
-| `pgpool_admin_password` | pgpool admin user (created on PostgreSQL, used in `pool_passwd`) | **Strong random** |
-| `watchdog_authkey` | Shared pgpool watchdog auth key (must be identical on all nodes) | **Strong random** |
-| `pmm_admin_password` | PMM web UI admin | **Strong random** |
-| `pg_pmm_user_password` | PMM PostgreSQL monitor user | **Strong random** |
+| Placeholder | Purpose | Production value |
+|-------------|---------|------------------|
+| `CHANGE_ME_POSTGRES` | PostgreSQL superuser | **Strong random** |
+| `CHANGE_ME_REPLICATOR` | Streaming replication user | **Strong random** |
+| `CHANGE_ME_ADMIN` | Patroni REST API admin | **Strong random** |
+| `CHANGE_ME_PERCONA` | Percona monitoring user | **Strong random** |
+| `CHANGE_ME_PGPOOL` | pgpool monitoring user (also the health-check user) | **Strong random** |
+| `CHANGE_ME_PCP` | Pgpool PCP admin | **Strong random** |
+| `CHANGE_ME_PGPOOL_ADMIN` | pgpool admin user (created on PostgreSQL, used in `pool_passwd`) | **Strong random** |
+| `CHANGE_ME_WD_AUTH` | Shared pgpool watchdog auth key (must be identical on all nodes) | **Strong random** |
+| `YourNewPassword` / `CHANGE_ME` | PMM admin / PMM PostgreSQL monitor user (only if you enable PMM) | **Strong random** |
 
-> 🔑 **Replace every `CHANGE_ME_*` before going live.** The manual configs in §9 use `CHANGE_ME_*` placeholders. Map them to `variables.yaml` as follows: `CHANGE_ME_POSTGRES` → `postgres_password`, `CHANGE_ME_REPLICATOR` → `replicator_password`, `CHANGE_ME_ADMIN` → `patroni_admin_password`, `CHANGE_ME_PERCONA` → `percona_password`, `CHANGE_ME_PGPOOL` → `pgpool_password`, `CHANGE_ME_PCP` → `pcp_password`, `CHANGE_ME_PGPOOL_ADMIN` → `pgpool_admin_password`, `CHANGE_ME_WD_AUTH` → `watchdog_authkey`, `CHANGE_ME_HEALTH` → `pgpool_password` (the health-check user is `pgpool`).
+> 🔑 **Where each placeholder appears:** `CHANGE_ME_POSTGRES`/`CHANGE_ME_REPLICATOR`/`CHANGE_ME_ADMIN`/`CHANGE_ME_PERCONA`/`CHANGE_ME_PGPOOL` are in `patroni.yml` (Phase 3); `CHANGE_ME_HEALTH`/`CHANGE_ME_WD_AUTH`/`CHANGE_ME_PGPOOL_ADMIN`/`CHANGE_ME_PCP` are in the pgpool configs (Phase 4). Use the **same** password for `CHANGE_ME_PGPOOL` and `CHANGE_ME_HEALTH` (they are the same `pgpool` user).
 
 Non-negotiable rules:
 
-- **Encrypt the whole file** with Ansible Vault: `ansible-vault encrypt variables.yaml`, then run playbooks with `--ask-vault-pass`.
-- **Never commit `variables.yaml`** — it is in `.gitignore`. Only `variables.yaml.example` is committed.
 - **Firewall only the cluster subnet** — allow the ports in §4 only between cluster nodes.
 - **Expose only the VIP (9999) and PMM (443)** to application/admin networks. **Never expose** etcd (:2379/2380), the Patroni REST API (:8008), or PostgreSQL (:5432) publicly.
 - Keep the `pgpass` file private with `0600` permissions (the bootstrap uses `/tmp/pgpass0` — move it after first boot if you prefer).
 - Keep PMM behind a VPN or at minimum behind strong auth (change the admin password on first login).
 - `pcp.conf` and `pool_passwd` are chmod 0640; the sudoers entry (`postgres ALL=(ALL) NOPASSWD: /usr/sbin/ip, /usr/sbin/arping`) is the minimum needed for VIP management.
+- Store your chosen passwords somewhere safe (a password manager) — they are not stored in any central file.
 
 ---
 
-## 14. Troubleshooting
+## 13. Troubleshooting
 
 | Issue | Likely cause | Check / fix |
 |-------|--------------|-------------|
 | **Patroni won't start** | etcd not reachable | `systemctl status etcd`, `ETCDCTL_API=3 etcdctl endpoint health`; check `patroni.yml` `etcd3.hosts` (all endpoints are listed now). `ExecStartPre` waits `etcd_wait_timeout` (90 s) before giving up. |
-| **etcd quorum not forming** | Stale data from a previous run | On a FRESH bootstrap only: set `etcd_force_reset: true` and re-run 02 (wipes + sets `initial-cluster-state: new`). Never `rm -rf /var/lib/etcd/*` on a healthy cluster. |
-| **No leader after 2 hosts down** | Expected — 3-node etcd needs a 2/3 majority | Consensus working correctly. For higher tolerance use `etcd_group: "etcd_nodes"` with 3–5 dedicated witnesses (see §16). |
+| **etcd quorum not forming** | Stale data from a previous run | On a FRESH bootstrap only: wipe `/var/lib/etcd/*` and re-run Phase 2 with `ETCD_INITIAL_CLUSTER_STATE="new"`. Never `rm -rf /var/lib/etcd/*` on a healthy cluster. |
+| **No leader after 2 hosts down** | Expected — 3-node etcd needs a 2/3 majority | Consensus working correctly. For higher tolerance use `etcd_group: "etcd_nodes"` with 3–5 dedicated witnesses (see §15). |
 | **Crashed replica won't recover** | Corrupt data dir or DCS hiccup | `patroni-self-heal.timer` restarts a crashed LOCAL member automatically; for a corrupt data dir run `patronictl reinit maruf <member>` manually (never auto-reinit). |
 | **Patroni won't start after reboot** | Patroni raced etcd at boot | `ExecStartPre` waits for DCS; check `journalctl -u patroni` and `/var/log/patroni/cluster_health.log`. |
-| **etcd member fails GPG validation** | Fresh OS missing Percona keys | The RPM installs its own key; the playbook uses `disable_gpg_check: true` for the release RPM. |
+| **etcd member fails GPG validation** | Fresh OS missing Percona keys | The RPM installs its own key; if the release RPM fails GPG validation, install it with `--nogpgcheck`. |
 | **Replicas stuck with lag** | Replication slot missing / WAL removed | `patronictl list`; check `pg_replication_slots`; a full `pg_basebackup` may be needed. |
 | **VIP not moving** | sudoers / capability issues | `sudoers.d/pgpool-vip` entry present? `journalctl -u pgpool` for vip_up/vip_down errors. |
 | **Watchdog not forming** | Firewall 9000, auth key mismatch, heartbeat port collision | Open UDP/TCP 9000 (wd_port) and 9694 (heartbeat_port) between nodes; `wd_authkey` identical everywhere; heartbeat_port MUST differ from wd_port; nodes reachable. |
 | **pgpool rejects config** | Unindexed `wd_*` params | Pgpool 4.5+ requires **indexed** `hostname0`/`wd_port0`/`pgpool_port0` (and `heartbeat_hostname0`/`heartbeat_port0`); remove bare `wd_port`/`hostname`. **`wd_authkey` and `wd_priority` stay unindexed** in 4.7 — do not index them. |
 | **Debian pgpool2 missing / wrong version** | PGDG repo not added, or an old native 4.3.5 pin left over | Debian uses PGDG pgpool-II 4.7: ensure `/usr/share/keyrings/pgdg.gpg` + the `apt.postgresql.org` repo exist, remove any `/etc/apt/preferences.d/pgpool2` pin, then `apt install pgpool2=4.7.2-1.pgdg* libpgpoolpcp3=4.7.2-1.pgdg* postgresql-16-pgpool2=4.7.2-1.pgdg*`. |
 | **Cannot connect via VIP** | VIP on wrong node / pgpool not started | `ip addr` (who owns .200?), `pcp_watchdog_info`, `systemctl status pgpool`. |
-| **pool_passwd auth fails** | MD5 vs SCRAM mismatch | This repo uses a plaintext `pool_passwd` + `pool_hba.conf` (SCRAM-safe); keep file perms 0640. |
+| **pool_passwd auth fails** | MD5 vs SCRAM mismatch | This guide uses a plaintext `pool_passwd` + `pool_hba.conf` (SCRAM-safe); keep file perms 0640. |
 | **pgBackRest fails** | SSH keys / stanza missing | Run `stanza-create` first; `sudo -iu postgres pgbackrest --stanza=maruf info`; check `repo1-host`. |
 | **PMM not reachable** | Docker port mapping / firewall | Image listens on 8443 internally → map `-p 443:8443`; open 443 on the backup node; iptables FORWARD ACCEPT for 443. |
 | **`patronictl restart` hangs** | Interactive prompt | Use `patronictl restart maruf --no-wait` in automation. |
@@ -2279,7 +2659,7 @@ Non-negotiable rules:
 
 ---
 
-## 15. Validation & Evidence
+## 14. Validation & Evidence
 
 This architecture was **deployed end-to-end and validated on real hardware (kernel-level VMs)**, not just designed. Faults were injected with real power-loss semantics (`virsh destroy` — no graceful stops), with a continuous write workload and a 3-node observer running through every incident.
 
@@ -2323,7 +2703,7 @@ Replication is **asynchronous** (`synchronous_standby_names` not set). A transac
 
 ---
 
-## 16. Known Limitations & Honest Caveats
+## 15. Known Limitations & Honest Caveats
 
 This section exists so the supervisor has the complete picture — including the parts that are not flattering.
 
@@ -2333,7 +2713,7 @@ During Test 3, two of three PostgreSQL nodes were fully healthy throughout, yet 
 
 **DCS availability is the upper bound on write availability.** Mitigations, in increasing order of cost:
 
-1. **Dedicated etcd witness nodes** (`etcd_group: "etcd_nodes"` in `hosts.ini`/`variables.yaml`) — etcd no longer co-locates with PostgreSQL, so a DB-host crash never touches quorum. Patroni on `pg_nodes` then talks to **all** etcd endpoints, so a local etcd failure never blinds it.
+1. **Dedicated etcd witness nodes** — run etcd on dedicated witness hosts instead of the DB nodes, so a DB-host crash never touches quorum. Patroni on the DB nodes then talks to **all** etcd endpoints, so a local etcd failure never blinds it.
 2. **5-node etcd topology** — tolerates two concurrent etcd losses, end-to-end, instead of one.
 3. **Both** — dedicated witnesses *and* 5 members, for the strongest separation.
 
@@ -2341,7 +2721,7 @@ This is an architectural recommendation for a follow-up decision — **not a blo
 
 ### 2. Asynchronous replication means no hard zero-RPO guarantee
 
-See §15. Zero lost commits were observed empirically, but an async model cannot *guarantee* that a transaction acknowledged on the old primary microseconds before a power loss is present on the new primary. Zero-RPO requires synchronous mode (`synchronous_standby_names`), which trades write latency for durability.
+See §14. Zero lost commits were observed empirically, but an async model cannot *guarantee* that a transaction acknowledged on the old primary microseconds before a power loss is present on the new primary. Zero-RPO requires synchronous mode (`synchronous_standby_names`), which trades write latency for durability.
 
 ### 3. Failover is automatic, but not zero-downtime
 
@@ -2378,7 +2758,7 @@ The default co-located topology tolerates losing **any single host**. Losing **t
 
 ---
 
-## 17. Glossary
+## 16. Glossary
 
 | Term | Definition |
 |------|-----------|
@@ -2404,19 +2784,6 @@ The default co-located topology tolerates losing **any single host**. Losing **t
 
 ---
 
-## 18. Further Reading
-
-All source material lives in the repository: **https://github.com/marufmoinuddin/patroni-pgpool-ansible**
-
-| Topic | Document |
-|-------|----------|
-| Quick start | `docs/getting-started/quick-start.md` |
-| Architecture & concepts | `docs/concepts/architecture.md` · `docs/concepts/ha-fundamentals.md` · `docs/concepts/patroni-internals.md` · `docs/concepts/pgpool.md` · `docs/concepts/resilience.md` |
-| Deployment | `docs/deployment/ansible.md` · `docs/deployment/manual.md` · `docs/deployment/server-planning.md` · `docs/deployment/repository-contents.md` |
-| Operations | `docs/operations/operations.md` · `docs/operations/validation.md` · `docs/operations/security.md` · `docs/operations/production-recommendations.md` |
-| Decision guides | `docs/solutions/patroni-pgpool-vs-standalone-pgpool.md` · `docs/solutions/patroni-pgpool-vs-haproxy-pgbouncer.md` · `docs/solutions/preferred-primary-node.md` · `docs/solutions/patroni-promotion-mechanism.md` |
-| Validation | `docs/solutions/failover-test-report.md` · `docs/operations/validation.md` · `docs/troubleshooting/failover-testing.md` |
-| Troubleshooting | `docs/troubleshooting/troubleshooting.md` |
-| External references | `docs/reference/external-references.md` |
+## 17. Further Reading
 
 External links: [Patroni docs](https://patroni.readthedocs.io/) · [Percona Distribution for PostgreSQL](https://www.percona.com/software/postgresql-distribution) · [Percona Patroni setup](https://docs.percona.com/postgresql/16/patroni.html) · [pgpool-II docs](https://www.pgpool.net/docs/) · [pgBackRest](https://pgbackrest.org/) · [PMM](https://www.percona.com/software/database-tools/percona-monitoring-and-management) · [etcd](https://etcd.io/docs/)
