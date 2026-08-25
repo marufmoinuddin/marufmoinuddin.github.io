@@ -5,13 +5,19 @@ date: 2026-08-25
 category: PostgreSQL
 tags: [postgresql, high-availability, patroni, pgpool-ii, etcd, pgbackrest, failover, ansible]
 excerpt: "A complete, decision-ready guide to a production 3-node PostgreSQL 16 HA cluster — Patroni owns the data plane, pgpool-II owns the access plane, with 5/5 validated power-loss failovers, zero data loss, and honest caveats."
-read_time: 86
+read_time: 91
 ---
 
 # PostgreSQL High Availability with Patroni + pgpool-II — A Complete Guide
 
 > **One file. No prior DBA knowledge required.**
 > This guide explains a production PostgreSQL 16 high-availability cluster — what it is, why it exists, how it works, how it was deployed, how it behaves under failure, and what its honest limitations are — for a supervisor who needs to make an informed decision.
+
+> 🗺️ **Reader's map — read only what you need:**
+> - **Making the buy/build decision?** Read §1–8 (what it is, why it exists, how it works) and §15–16 (evidence + honest limitations).
+> - **Deploying or operating the cluster?** Read §9 (manual deploy) or §10 (automated deploy), then §11 (day-2 operations), §12 (production hardening), §13 (security & secrets — incl. the `CHANGE_ME_*` mapping for §9), and §14 (troubleshooting).
+> - **Just need a term defined?** The Glossary (§17) defines every acronym.
+> - §9 is a full implementer runbook; if you are only evaluating, you can skip it.
 
 ---
 
@@ -22,6 +28,8 @@ This document describes a **3-node PostgreSQL 16 high-availability (HA) cluster*
 The single most important mental model is: **Patroni owns the data plane** (which PostgreSQL node is primary, replication, failover, slots, config), and **pgpool-II owns the access plane** (where clients connect, pooling, query routing, Virtual IP). They do not fight over leadership — Patroni is the single source of truth, and pgpool-II follows Patroni's lead.
 
 The architecture has been **stress-tested with real power-loss fault injection**: **5 out of 5 consecutive failovers passed**, with **zero lost commits** across ~104,000 confirmed writes and **zero split-brain** across 3,600 direct node probes. Failover took ~40 seconds (median), clients saw a 34–38 second write interruption, and killed nodes rejoined in 36–40 seconds — all automatically, without human intervention or re-provisioning.
+
+> 📖 **Jargon you'll meet in this summary** (all defined properly in §3 and the Glossary §17): **Patroni** = the cluster manager that decides who is primary; **pgpool-II** = the traffic controller apps connect to; **replication** = copying the database to other nodes; **WAL** = the transaction log; **quorum** = a majority of nodes agreeing; **split-brain** = two nodes both acting as primary; **async replication** = replicas may lag slightly behind the primary.
 
 This is not magic and not perfect: replication is asynchronous (a hard zero-data-loss guarantee would require synchronous mode), and etcd is a single point of failure for *write availability* (mitigations are documented). But for a self-contained production cluster, this design delivers automatic, safe, observable failover — with the evidence to prove it.
 
@@ -569,7 +577,12 @@ This is the **complete, hand-by-hand path** — the same steps the Ansible playb
 | **Pgpool package** | `percona-pgpool-II-pg16` (4.7) | **PGDG `pgpool2` 4.7.2** + `postgresql-16-pgpool2` |
 | Postgres user home | `/var/lib/pgsql` | `/var/lib/postgresql` |
 
-> 📄 **The manual path needs the repository.** Several scripts referenced below (`failover.sh`, `follow_master.sh`, `reattach_nodes.sh`, `pgpool_role_signal.sh`, `patroni_self_heal.sh`, `cluster_health.sh`) are long and battle-tested; the complete working versions live **inline in the playbooks** (`04_Configure_Pgpool.yml`, `03_Configure_Patroni.yml`, `06_Configure_Cluster_Health.yml`) and in `files/pgpool_role_signal.sh`. This guide shows the config and the outline; **copy the full scripts from the repository** for production rather than retyping them.
+> 📄 **The manual path needs the repository.** Several scripts referenced below (`failover.sh`, `follow_master.sh`, `reattach_nodes.sh`, `pgpool_role_signal.sh`, `patroni_self_heal.sh`, `cluster_health.sh`) are long and battle-tested; the complete working versions live **inline in the playbooks** (`04_Configure_Pgpool.yml`, `03_Configure_Patroni.yml`, `06_Configure_Cluster_Health.yml`) and in `files/pgpool_role_signal.sh`. This guide shows the config and the outline; **copy the full scripts from the repository** for production rather than retyping them. If you don't have the repo yet, clone it first (on your workstation, or on a node that can reach the internet):
+> ```bash
+> git clone https://github.com/marufmoinuddin/patroni-pgpool-ansible.git
+> cd patroni-pgpool-ansible
+> ```
+> The phases below that need repo files tell you to run commands **from this directory** (the repo root).
 
 > 📝 **How to create the config files.** Throughout the phases, config files are shown as content blocks with a comment naming the target path (e.g. `# /etc/patroni/patroni.yml`). Create each file at that exact path with your editor, e.g. `vi /etc/patroni/patroni.yml` (paste the block, save, quit), or with a heredoc:
 > ```bash
@@ -579,12 +592,21 @@ This is the **complete, hand-by-hand path** — the same steps the Ansible playb
 > ```
 > The systemd units and auth files already show the full `cat > ... <<'EOF'` command — for those, just run the block as-is. Where a phase says "create the file", the path in the comment is where it must live.
 
+> ⚠️ **Every `192.168.122.x` address below is an EXAMPLE.** Replace **all** of them with YOUR VMs' IPs and YOUR chosen VIP before copying any file — they appear in every config block (etcd, Patroni, pgpool, pgBackRest) and in the verification commands. If you leave them as-is, the cluster will deploy against the wrong addresses and Phase 8's `psql -h 192.168.122.200` will time out.
+
+> 🛡️ **The four classic self-inflicted failures (and their guards):**
+> 1. **SSH lock-out** — `ufw --force enable` drops your SSH session unless you open port 22 first. Guard: the Phase 0 firewall block includes `ufw allow 22/tcp`.
+> 2. **Wrong example IPs** — typing `192.168.122.x` literally instead of your real addresses. Guard: replace every `192.168.122.x` (see the warning above).
+> 3. **Wrong NIC name** — copying `eth0`/`enp3s0` when your interface is different. Guard: run `ip link` first and use your real interface name everywhere (the pgpool watchdog blocks call this out).
+> 4. **Forgetting to clone the repo** — Phase 3 and Phase 7 copy scripts from it. Guard: run the `git clone` + `cd` in the note above before those phases.
+
 ---
 
 ### Phase 0 — OS preparation (all 4 nodes)
 
 ```bash
-# 1. Hostnames
+# 1. Hostnames (run each on the matching VM: db1 on .150, db2 on .151, db3 on .152,
+#    db-backup on .153)
 hostnamectl set-hostname db1      # db2, db3, db-backup respectively
 
 # 2. /etc/hosts — same on every node
@@ -598,6 +620,7 @@ EOF
 
 # 3. Firewall: open cluster ports (between nodes only)
 # RHEL/CentOS:
+firewall-cmd --permanent --add-service=ssh        # keep SSH open so you don't lock yourself out
 firewall-cmd --permanent --add-port={2379,2380}/tcp
 firewall-cmd --permanent --add-port=5432/tcp
 firewall-cmd --permanent --add-port=8008/tcp
@@ -607,6 +630,7 @@ firewall-cmd --permanent --add-port={9898,9999}/tcp
 firewall-cmd --reload
 
 # Debian/Ubuntu (UFW):
+ufw allow 22/tcp          # keep SSH open so you don't lock yourself out
 ufw allow 2379/tcp
 ufw allow 2380/tcp
 ufw allow 5432/tcp
@@ -618,7 +642,7 @@ ufw allow 9999/tcp
 ufw --force enable
 ```
 
-> 🔥 **Ports:** 2379/2380 (etcd client/peer), 5432 (PostgreSQL), 8008 (Patroni REST), 9000 (pgpool `wd_port`), **9694/udp (watchdog heartbeat — required, not optional)**, 9898 (PCP), 9999 (pgpool VIP).
+> 🔥 **Ports:** 2379/2380 (etcd client/peer), 5432 (PostgreSQL), 8008 (Patroni REST), 9000 (pgpool `wd_port`), **9694/udp (watchdog heartbeat — required, not optional)**, 9898 (PCP), 9999 (pgpool VIP). **Keep 22 (SSH) open** — `ufw --force enable` switches to default-deny incoming, and without an explicit `ufw allow 22/tcp` your SSH session dies at this exact command.
 
 ---
 
@@ -667,11 +691,12 @@ echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pu
 apt update
 # NOTE: do NOT install pgpool2 here — it is installed (pinned to 4.7.2) in Phase 4
 
-# 5. Install the rest from Percona
+# 5. Install the rest from Percona (jq is required by the failover scripts in Phase 4)
 apt install -y \
   percona-postgresql-16 \
   percona-patroni etcd \
   percona-pgbackrest \
+  jq \
   docker.io
 ```
 
@@ -746,9 +771,15 @@ systemctl enable --now etcd   # on all 3, roughly together
 ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 endpoint health
 ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 member list
 # All 3 members must show "healthy: true"
+
+# If a member shows "unhealthy": check `journalctl -u etcd -f` on that node, and
+# confirm all three /etc/etcd/etcd.conf files have IDENTICAL ETCD_INITIAL_CLUSTER
+# and ETCD_INITIAL_CLUSTER_TOKEN values (a typo in one breaks the whole quorum).
 ```
 
 > 🔁 **Re-runs never wipe etcd.** Only a fresh bootstrap / DR restore wipes the data dir (equivalent to `etcd_force_reset: true` in the playbooks). Never `rm -rf /var/lib/etcd/*` on a healthy cluster.
+
+> ✅ **Done with etcd?** Phase 8 step 2 re-verifies quorum — run it after Phase 7.
 
 ---
 
@@ -837,7 +868,7 @@ postgresql:
   connect_address: 192.168.122.150:5432   # this node's IP
   data_dir: /postgres/data/16/maruf         # DEBIAN PATH — change for RHEL below
   bin_dir: /usr/lib/postgresql/16/bin      # DEBIAN PATH — change for RHEL below
-  pgpass: /tmp/pgpass0
+  pgpass: /tmp/pgpass0        # Patroni creates this file during bootstrap — you don't create it
   authentication:
     replication:
       username: replicator
@@ -918,8 +949,9 @@ chmod 0755 /usr/local/sbin/wait_for_etcd.sh
 # 2. pgpool_role_signal.sh — Patroni on_role_change callback: on promotion,
 #    immediately run pcp_promote_node on every pgpool node (closes the ~4 min
 #    switchover detection gap). This file ships in the repository at
-#    files/pgpool_role_signal.sh — run the command below from the REPO ROOT
-#    (the directory you cloned the repo into):
+#    files/pgpool_role_signal.sh — run the commands below from the REPO ROOT
+#    (the directory you cloned the repo into — see the §9 intro):
+cd ~/patroni-pgpool-ansible   # or wherever you cloned the repo
 cp files/pgpool_role_signal.sh /usr/local/sbin/pgpool_role_signal.sh
 chown postgres:postgres /usr/local/sbin/pgpool_role_signal.sh
 chmod 0755 /usr/local/sbin/pgpool_role_signal.sh
@@ -1029,6 +1061,8 @@ patronictl -c /etc/patroni/patroni.yml list
 
 > ✅ **Validate:** `patroni --validate-config /etc/patroni/patroni.yml` on each node before starting.
 
+> ✅ **Done with Patroni?** Phase 8 step 1 re-checks the cluster — run it after Phase 7.
+
 ---
 
 ### Phase 4 — pgpool-II + Watchdog + VIP (db1, db2, db3)
@@ -1045,10 +1079,10 @@ patronictl -c /etc/patroni/patroni.yml list
 # /etc/pgpool-II/pgpool.conf  (db1 example)
 listen_addresses = '*'
 port = 9999
-socket_dir = '/var/run/postgresql'
+socket_dir = '/var/run/postgresql'      # this is why the mkdir step below also chowns /var/run/postgresql
 pcp_listen_addresses = '*'
 pcp_port = 9898
-pcp_socket_dir = '/var/run/postgresql'
+pcp_socket_dir = '/var/run/postgresql'  # same — must be writable by postgres
 
 # Backend nodes (Patroni-managed PostgreSQL instances)
 backend_hostname0 = '192.168.122.150'
@@ -1193,10 +1227,10 @@ apt install -y pgpool2=4.7.2-1.pgdg* libpgpoolpcp3=4.7.2-1.pgdg* postgresql-16-p
 # /etc/pgpool2/pgpool.conf  (db1 example — watchdog INLINE)
 listen_addresses = '*'
 port = 9999
-socket_dir = '/var/run/postgresql'
+socket_dir = '/var/run/postgresql'      # this is why the mkdir step below also chowns /var/run/postgresql
 pcp_listen_addresses = '*'
 pcp_port = 9898
-pcp_socket_dir = '/var/run/postgresql'
+pcp_socket_dir = '/var/run/postgresql'  # same — must be writable by postgres
 
 # Backend nodes
 backend_hostname0 = '192.168.122.150'
@@ -1324,6 +1358,8 @@ arping_path = '/usr/sbin'
 arping_cmd = '/usr/sbin/arping -U 192.168.122.200 -w 1 -I enp3s0'
 ```
 
+> ⚠️ **`enp3s0` is an example NIC name.** Check your actual interface with `ip link` (Debian 12 commonly uses `enp3s0` or `enp1s0`, but it can be `ens18`, `eth0`, etc.). Change **every** `enp3s0` in this file — `wd_monitoring_interfaces_list`, `heartbeat_device0/1`, and `if_up_cmd`/`if_down_cmd`/`arping_cmd` — or the watchdog heartbeats will silently fail and the VIP will never form.
+
 > 🔑 **Debian vs RHEL parameter differences (both 4.7):**
 > | 4.7 (CentOS, separate file) | 4.7 (Debian, inline) |
 > |-----------------------------|------------------------|
@@ -1435,6 +1471,8 @@ SQL
 #### Deploy the Patroni-aware failover scripts
 
 These scripts are what make pgpool follow Patroni's leader after a failover. The versions below are **functional** (they poll Patroni, map the new leader to a pgpool backend node id, and re-attach it). On Debian, change `/etc/pgpool-II` → `/etc/pgpool2` and `/var/log/pgpool` → `/var/log/pgpool2` inside the scripts.
+
+> ✅ **Prerequisite check:** `failover.sh` uses `jq` to parse `patronictl` output. Verify it is installed before continuing: `command -v jq` (RHEL installs it in Phase 1; Debian now does too). If it prints nothing, install it: `apt install -y jq` (Debian) or `dnf install -y jq` (RHEL).
 
 ```bash
 # /etc/pgpool-II/failover.sh — on backend failover, wait for Patroni to elect a
@@ -1589,6 +1627,8 @@ ip addr show eth0 | grep 192.168.122.200    # RHEL (or your NIC)
 
 > 🔁 **Auto-reattach (optional):** the playbooks also deploy a `pgpool-reattach.timer` that periodically re-attaches recovered backend nodes and corrects routing-role mismatches. It is optional — copy `reattach_nodes.sh` + the timer unit from `04_Configure_Pgpool.yml` if you want it.
 
+> ✅ **Done with pgpool?** Phase 8 steps 3–4 re-verify the watchdog/VIP and the connection through it — run them after Phase 7.
+
 ---
 
 ### Phase 5 — pgBackRest (backup node `.153` + PG nodes)
@@ -1664,14 +1704,9 @@ EOF
 
 > 🔒 **Mask the unused server daemon:** this stack is SSH-based (no pgBackRest TLS daemon). Mask the unit so it can never start: `systemctl mask pgbackrest` (only if a unit file exists — the Debian package ships none).
 
-```bash
-# Create the stanza, then the first full backup (on the backup node)
-sudo -iu postgres pgbackrest --stanza=maruf stanza-create
-sudo -iu postgres pgbackrest --stanza=maruf --type=full backup
-sudo -iu postgres pgbackrest --stanza=maruf info
-```
+#### Enable archiving in Patroni FIRST (for PITR)
 
-#### Enable archiving in Patroni (for PITR)
+> ⚠️ **Do this BEFORE the first backup.** A backup taken before archiving is enabled cannot be used for point-in-time recovery — it has no WAL archive chain to replay. The order below matters.
 
 ```bash
 # On the primary, re-enable archiving and point it at pgBackRest
@@ -1687,7 +1722,13 @@ patronictl -c /etc/patroni/patroni.yml edit-config \
 patronictl -c /etc/patroni/patroni.yml restart maruf --force
 ```
 
-> Archiving must be enabled **before** the first backup for a complete point-in-time-recovery chain.
+Now create the stanza and take the first full backup (on the backup node):
+
+```bash
+sudo -iu postgres pgbackrest --stanza=maruf stanza-create
+sudo -iu postgres pgbackrest --stanza=maruf --type=full backup
+sudo -iu postgres pgbackrest --stanza=maruf info
+```
 
 ---
 
@@ -1766,9 +1807,13 @@ pmm-admin add postgresql --username=pmm --password=CHANGE_ME --skip-connection-c
 > ⚠️ **These two scripts come from the repository** (`06_Configure_Cluster_Health.yml`). If you are following the manual path **without** the repo checked out, copy them from a machine that has it (or from the playbook file) before continuing — the timers below will fail without them. The cluster itself works fine without this phase; it only adds self-healing + monitoring.
 
 ```bash
+# 0. These commands must run from the REPO ROOT (the directory you cloned the
+#    repo into — see the §9 intro for the clone command). The playbook file is
+#    referenced by relative path.
+cd ~/patroni-pgpool-ansible   # or wherever you cloned the repo
+
 # 1. patroni_self_heal.sh — restart a crashed/stopped/failed LOCAL Patroni member
 #    (NEVER the leader). Copy from 06_Configure_Cluster_Health.yml.
-#    From a repo checkout:
 cp 06_Configure_Cluster_Health.yml /tmp/06.yml
 #    Extract the script body from the playbook (between the copy task markers):
 sed -n '/patroni_self_heal.sh/,/^    - name: Deploy Patroni self-heal systemd service/p' /tmp/06.yml \
@@ -1783,6 +1828,12 @@ sed -n '/cluster_health.sh/,/^    - name: Deploy cluster health monitor systemd 
 chmod 0755 /usr/local/sbin/cluster_health.sh
 #    (Set health_alert_command inside the script to get paged before an outage
 #    becomes permanent.)
+
+# ✅ Verify both scripts are non-empty (if the playbook markers change, the sed
+#    produces an empty file and the timers fail silently):
+ls -l /usr/local/sbin/patroni_self_heal.sh /usr/local/sbin/cluster_health.sh
+#    Each should be several KB. If either is 0 bytes, the extraction failed —
+#    copy the script bodies from 06_Configure_Cluster_Health.yml by hand instead.
 
 # 3. systemd timers
 cat > /etc/systemd/system/patroni-self-heal.service <<'EOF'
@@ -1829,6 +1880,10 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now patroni-self-heal.timer cluster-health.timer
+
+# ✅ Verify both timers are active and scheduled:
+systemctl list-timers | grep -E 'patroni-self-heal|cluster-health'
+#    Both rows should show populated NEXT / LEFT / LAST columns (not "n/a").
 ```
 
 > 📄 The complete, working `patroni_self_heal.sh` and `cluster_health.sh` are inline in `06_Configure_Cluster_Health.yml` — copy them verbatim for production.
@@ -1885,7 +1940,7 @@ ansible-vault encrypt variables.yaml       # → recommended
 
 # 4. Deploy (~10–15 minutes)
 ansible-playbook -i hosts site.yml --syntax-check   # first: check it parses
-ansible-playbook -i hosts site.yml --ask-vault-pass
+ansible-playbook -i hosts site.yml --ask-vault-pass   # this is the password you set in the previous step
 ```
 
 Key variables you must change in `variables.yaml`: `patroni_scope` (cluster name, default `maruf`), `postgres_password`, `replicator_password`, `patroni_admin_password`, `percona_password`, `pgpool_password`, `pcp_password`, `pgpool_admin_password`, `watchdog_authkey`, `pmm_admin_password`, `pg_pmm_user_password` (all **strong random**), `vip_address` (`192.168.122.200`), and `vip_interface_override` (only if the auto-detected NIC is wrong — verify with `ip link`).
@@ -2292,7 +2347,7 @@ See §15. Zero lost commits were observed empirically, but an async model cannot
 
 The 34–38 s write interruption is real and client-visible. A stateful application must handle connection errors and retry. This is standard for async streaming-replication HA and is the honest trade-off for automatic failover — it is *downtime-minimizing*, not *downtime-free*.
 
-### 3a. Client connection requirements (what your application must do)
+### 4. Client connection requirements (what your application must do)
 
 For applications to survive failover cleanly, follow these rules:
 
@@ -2303,11 +2358,11 @@ For applications to survive failover cleanly, follow these rules:
 5. **Handle in-flight transactions.** A transaction in flight during failover will error — the client must roll back and retry. Idempotent writes (or a dedup key) make retries safe.
 6. **Do not pin to a node.** No hardcoded `db1`/`db2`/`db3` hostnames in application config; use the VIP hostname only.
 
-### 4. First-host-loss tolerance only (by default)
+### 5. First-host-loss tolerance only (by default)
 
 The default co-located topology tolerates losing **any single host**. Losing **two** DB hosts at once kills etcd quorum → correctly no leader (safe, but unavailable). The 3–5 witness etcd topology (above) is the fix. "All hosts down" is disaster recovery, not HA — the documented restore path is: bring etcd up first, then Patroni, then the rest, or restore from pgBackRest if data is unrecoverable.
 
-### 5. Known non-blockers (open follow-ups in this deployment)
+### 6. Known non-blockers (open follow-ups in this deployment)
 
 | Item | Status | Action |
 |------|--------|--------|
@@ -2315,7 +2370,7 @@ The default co-located topology tolerates losing **any single host**. Losing **t
 | pgBackRest **archive-push** can silently wedge for hours with no monitoring alert (observed ~2.5 h before Test 2) | Open — not a blocker | Add an archive-staleness/backlog check (oldest unarchived WAL age) to the health monitor |
 | PMM monitoring | **Disabled by policy** on `db-backup` | Keep PMM off; do not redeploy; the stack is fully validated without it |
 
-### 6. Watchdog/VIP hard facts
+### 7. Watchdog/VIP hard facts
 
 - `wd_quorum_exit = on` (default): a pgpool instance that loses watchdog quorum **exits** rather than serving the VIP alone → no split-brain VIP.
 - The VIP is served by the *watchdog leader*, which is elected independently of the PostgreSQL primary — the VIP may move without a DB failover (and vice versa). If the pgpool process on the VIP-holding node dies, the VIP must move (measured ~50 s blip in one test) — applications should retry connections.
