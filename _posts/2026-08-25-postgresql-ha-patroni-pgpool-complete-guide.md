@@ -5,7 +5,7 @@ date: 2026-08-25
 category: PostgreSQL
 tags: [postgresql, high-availability, patroni, pgpool-ii, etcd, pgbackrest, failover, ansible]
 excerpt: "A complete, decision-ready guide to a production 3-node PostgreSQL 16 HA cluster — Patroni owns the data plane, pgpool-II owns the access plane, with 5/5 validated power-loss failovers, zero data loss, and honest caveats."
-read_time: 82
+read_time: 86
 ---
 
 # PostgreSQL High Availability with Patroni + pgpool-II — A Complete Guide
@@ -571,6 +571,14 @@ This is the **complete, hand-by-hand path** — the same steps the Ansible playb
 
 > 📄 **The manual path needs the repository.** Several scripts referenced below (`failover.sh`, `follow_master.sh`, `reattach_nodes.sh`, `pgpool_role_signal.sh`, `patroni_self_heal.sh`, `cluster_health.sh`) are long and battle-tested; the complete working versions live **inline in the playbooks** (`04_Configure_Pgpool.yml`, `03_Configure_Patroni.yml`, `06_Configure_Cluster_Health.yml`) and in `files/pgpool_role_signal.sh`. This guide shows the config and the outline; **copy the full scripts from the repository** for production rather than retyping them.
 
+> 📝 **How to create the config files.** Throughout the phases, config files are shown as content blocks with a comment naming the target path (e.g. `# /etc/patroni/patroni.yml`). Create each file at that exact path with your editor, e.g. `vi /etc/patroni/patroni.yml` (paste the block, save, quit), or with a heredoc:
+> ```bash
+> cat > /etc/patroni/patroni.yml <<'EOF'
+> <paste the block content here>
+> EOF
+> ```
+> The systemd units and auth files already show the full `cat > ... <<'EOF'` command — for those, just run the block as-is. Where a phase says "create the file", the path in the comment is where it must live.
+
 ---
 
 ### Phase 0 — OS preparation (all 4 nodes)
@@ -673,7 +681,7 @@ apt install -y \
 
 ### Phase 2 — etcd cluster (db1, db2, db3)
 
-Create `/etc/etcd/etcd.conf` — the token and member IP list **must be identical** on all three nodes; only `name` and the two `...ADVERTISE...` values differ:
+Create `/etc/etcd/etcd.conf` on **each** node — the token and member IP list **must be identical** on all three nodes; only `ETCD_NAME`, `ETCD_ADVERTISE_CLIENT_URLS`, and `ETCD_INITIAL_ADVERTISE_PEER_URLS` differ per node:
 
 ```ini
 # /etc/etcd/etcd.conf  (db1 example)
@@ -688,9 +696,11 @@ ETCD_INITIAL_CLUSTER_STATE="new"
 ETCD_INITIAL_CLUSTER_TOKEN="PostgreSQL_HA_Cluster_1"
 ```
 
-> Swap `ETCD_NAME` and the two `...ADVERTISE...` values on db2 (`192.168.122.151`) and db3 (`192.168.122.152`).
+> 🔑 **Per-node values:** on **db2** set `ETCD_NAME="db2"`, `ETCD_ADVERTISE_CLIENT_URLS="http://192.168.122.151:2379"`, `ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.122.151:2380"`. On **db3** use `192.168.122.152`. Everything else stays identical.
 
-Create the systemd unit (identical on both distros):
+> 🔁 **`ETCD_INITIAL_CLUSTER_STATE`:** use `"new"` on the **first** bootstrap. On any later start (reboot, re-run) the data dir already exists — change it to `"existing"` or etcd will fail with a member/cluster-ID mismatch. (The playbooks derive this automatically from whether `/var/lib/etcd/member` exists.)
+
+Create the systemd unit — **identical on all three nodes** (it reads each node's values from `/etc/etcd/etcd.conf` via `EnvironmentFile`):
 
 ```bash
 cat > /etc/systemd/system/etcd.service <<'EOF'
@@ -701,24 +711,19 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-Environment="TOKEN=PostgreSQL_HA_Cluster_1"
-# initial-cluster-state is 'new' on a fresh bootstrap, 'existing' on re-runs/reboots
-# (the playbook derives this from whether /var/lib/etcd/member already exists)
-Environment="CLUSTER_STATE=new"
-Environment="THIS_NAME=db1"
-Environment="THIS_IP=192.168.122.150"
-Environment="CLUSTER=db1=http://192.168.122.150:2380,db2=http://192.168.122.151:2380,db3=http://192.168.122.152:2380"
+# Loads the per-node values from /etc/etcd/etcd.conf (ETCD_NAME, ETCD_*_URLS, ...)
+EnvironmentFile=/etc/etcd/etcd.conf
 
 ExecStart=/usr/bin/etcd \
-  --data-dir=/var/lib/etcd \
-  --name ${THIS_NAME} \
-  --initial-advertise-peer-urls http://${THIS_IP}:2380 \
-  --listen-peer-urls http://${THIS_IP}:2380 \
-  --advertise-client-urls http://${THIS_IP}:2379 \
-  --listen-client-urls http://0.0.0.0:2379 \
-  --initial-cluster ${CLUSTER} \
-  --initial-cluster-state ${CLUSTER_STATE} \
-  --initial-cluster-token ${TOKEN}
+  --data-dir=${ETCD_DATA_DIR} \
+  --name ${ETCD_NAME} \
+  --initial-advertise-peer-urls ${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
+  --listen-peer-urls ${ETCD_LISTEN_PEER_URLS} \
+  --advertise-client-urls ${ETCD_ADVERTISE_CLIENT_URLS} \
+  --listen-client-urls ${ETCD_LISTEN_CLIENT_URLS} \
+  --initial-cluster ${ETCD_INITIAL_CLUSTER} \
+  --initial-cluster-state ${ETCD_INITIAL_CLUSTER_STATE} \
+  --initial-cluster-token ${ETCD_INITIAL_CLUSTER_TOKEN}
 
 Restart=always
 RestartSec=5
@@ -748,6 +753,8 @@ ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 member list
 ---
 
 ### Phase 3 — Patroni + PostgreSQL (db1, db2, db3)
+
+> 🔑 **Replace every `CHANGE_ME_*` below with your real passwords before starting** (see §13 for the full mapping to `variables.yaml`). The `name` and the two `connect_address`/etcd host lines change per node.
 
 Create `/etc/patroni/patroni.yml` on **each** node. The structure is the same everywhere; only `name` and the two `connect_address`/etcd host lines change per node.
 
@@ -910,10 +917,14 @@ chmod 0755 /usr/local/sbin/wait_for_etcd.sh
 
 # 2. pgpool_role_signal.sh — Patroni on_role_change callback: on promotion,
 #    immediately run pcp_promote_node on every pgpool node (closes the ~4 min
-#    switchover detection gap). Copy the full script from files/pgpool_role_signal.sh.
+#    switchover detection gap). This file ships in the repository at
+#    files/pgpool_role_signal.sh — run the command below from the REPO ROOT
+#    (the directory you cloned the repo into):
 cp files/pgpool_role_signal.sh /usr/local/sbin/pgpool_role_signal.sh
 chown postgres:postgres /usr/local/sbin/pgpool_role_signal.sh
 chmod 0755 /usr/local/sbin/pgpool_role_signal.sh
+#    (If you do NOT have the repo, skip this step — the cluster still works,
+#    but clean switchovers fall back to the slower ~4 min sr_check polling.)
 ```
 
 #### Initialize PostgreSQL + systemd unit
@@ -1021,6 +1032,8 @@ patronictl -c /etc/patroni/patroni.yml list
 ---
 
 ### Phase 4 — pgpool-II + Watchdog + VIP (db1, db2, db3)
+
+> 🔑 **Replace every `CHANGE_ME_*` below with the same passwords you used in Phase 3** (`CHANGE_ME_HEALTH` = the `pgpool` user's password, `CHANGE_ME_WD_AUTH` = `watchdog_authkey`, etc. — see §13). The `wd_authkey` must be **identical on all three nodes**.
 
 > 📋 **Config directory and package version differences:**
 > - **RHEL/CentOS:** `/etc/pgpool-II`, pgpool-II 4.7 (Percona package), watchdog in **separate `pgpool_watchdog.conf`**
@@ -1321,6 +1334,13 @@ arping_cmd = '/usr/sbin/arping -U 192.168.122.200 -w 1 -I enp3s0'
 #### Per-node files (identical on both distros except config dir)
 
 ```bash
+# Create the pgpool log, pid, and socket directories (pgpool will not start
+# without them). RHEL: /var/log/pgpool + /var/run/pgpool; Debian: /var/log/pgpool2.
+mkdir -p /var/log/pgpool /var/run/pgpool /var/run/postgresql   # RHEL
+# mkdir -p /var/log/pgpool2 /var/run/pgpool /var/run/postgresql  # Debian
+chown -R postgres:postgres /var/log/pgpool /var/run/pgpool /var/run/postgresql   # RHEL
+# chown -R postgres:postgres /var/log/pgpool2 /var/run/pgpool /var/run/postgresql  # Debian
+
 # db1 → 0, db2 → 1, db3 → 2
 echo -n "0" > /etc/pgpool-II/pgpool_node_id    # RHEL path
 # echo -n "0" > /etc/pgpool2/pgpool_node_id    # Debian path
@@ -1414,23 +1434,76 @@ SQL
 
 #### Deploy the Patroni-aware failover scripts
 
-The repository's `04_Configure_Pgpool.yml` contains the **complete, working** versions of `failover.sh` and `follow_master.sh` inline. Copy them from there (they are battle-tested). At a minimum:
+These scripts are what make pgpool follow Patroni's leader after a failover. The versions below are **functional** (they poll Patroni, map the new leader to a pgpool backend node id, and re-attach it). On Debian, change `/etc/pgpool-II` → `/etc/pgpool2` and `/var/log/pgpool` → `/var/log/pgpool2` inside the scripts.
 
 ```bash
 # /etc/pgpool-II/failover.sh — on backend failover, wait for Patroni to elect a
 # new leader, map its IP to a pgpool backend node_id, and pcp_attach_node it.
 cat > /etc/pgpool-II/failover.sh <<'EOF'
 #!/bin/bash
-# (full version in 04_Configure_Pgpool.yml — this is the outline)
-FAILED_NODE_ID=$1; FAILED_NODE_HOST=$2; FAILED_NODE_PORT=$3
-FAILED_NODE_DATA=$4; NEW_MASTER_ID=$5; NEW_MASTER_HOST=$6
-NEW_MASTER_PORT=$7; OLD_MASTER_ID=$8; NEW_MASTER_DATA=$9; OLD_MASTER_DATA=${10}
+# Failover script for Pgpool-II with Patroni (runs as postgres user).
+# Re-attaches the new Patroni primary so pgpool routes writes correctly.
+
+FAILED_NODE_ID=$1
+FAILED_NODE_HOST=$2
+FAILED_NODE_PORT=$3
+FAILED_NODE_DATA=$4
+NEW_MASTER_ID=$5
+NEW_MASTER_HOST=$6
+NEW_MASTER_PORT=$7
+OLD_MASTER_ID=$8
+NEW_MASTER_DATA=$9
+OLD_MASTER_DATA=${10}
+
 LOG_FILE="/var/log/pgpool/failover.log"
 PATRONI_CONFIG="/etc/patroni/patroni.yml"
-PCP_USER="pgpool_pcp"; PCP_PORT=9898
+PCP_USER="pgpool_pcp"
+PCP_PORT=9898
+
 exec >> "$LOG_FILE" 2>&1
 echo "$(date): Failover triggered - failed node $FAILED_NODE_ID ($FAILED_NODE_HOST), new master $NEW_MASTER_ID ($NEW_MASTER_HOST)"
-# ... poll patronictl until the leader is stable, map IP -> node_id, pcp_attach_node ...
+
+# Wait for Patroni to complete leader election (etcd sync). Skip any result
+# whose Host is empty or equals the failed node.
+NEW_LEADER=""
+NEW_LEADER_IP=""
+for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    sleep 5
+    NEW_LEADER=$(patronictl -c $PATRONI_CONFIG list -f json 2>/dev/null | jq -r '.[] | select(.Role=="Leader") | .Member')
+    NEW_LEADER_IP=$(patronictl -c $PATRONI_CONFIG list -f json 2>/dev/null | jq -r '.[] | select(.Role=="Leader") | .Host')
+    if [ -n "$NEW_LEADER" ] && [ "$NEW_LEADER" != "null" ] && \
+       [ -n "$NEW_LEADER_IP" ] && [ "$NEW_LEADER_IP" != "null" ] && \
+       [ "$NEW_LEADER_IP" != "$FAILED_NODE_HOST" ]; then
+        echo "$(date): Leader candidate after poll $attempt: $NEW_LEADER ($NEW_LEADER_IP)"
+        break
+    fi
+    NEW_LEADER=""
+    NEW_LEADER_IP=""
+done
+
+if [ -z "$NEW_LEADER" ]; then
+    echo "$(date): ERROR - could not determine new Patroni leader after 50s"
+    exit 1
+fi
+
+# Map leader IP -> node id using pgpool.conf backend_hostname entries
+NODE_ID=""
+for idx in 0 1 2 3 4 5; do
+    B_HOST=$(grep -E "^backend_hostname$idx\s*=" /etc/pgpool-II/pgpool.conf | sed -E "s/.*=\s*'([^']+)'.*/\1/")
+    if [ -n "$B_HOST" ] && [ "$B_HOST" = "$NEW_LEADER_IP" ]; then
+        NODE_ID=$idx
+        break
+    fi
+done
+
+if [ -z "$NODE_ID" ]; then
+    echo "$(date): ERROR - could not map leader $NEW_LEADER ($NEW_LEADER_IP) to a pgpool backend node id"
+    exit 1
+fi
+
+echo "$(date): Attaching node $NODE_ID ($NEW_LEADER) as primary"
+PCPPASSFILE=/etc/pgpool-II/.pcppass pcp_attach_node -h localhost -U $PCP_USER -p $PCP_PORT $NODE_ID
+
 exit 0
 EOF
 
@@ -1448,13 +1521,15 @@ chmod +x /etc/pgpool-II/failover.sh /etc/pgpool-II/follow_master.sh
 chown postgres:postgres /etc/pgpool-II/failover.sh /etc/pgpool-II/follow_master.sh
 ```
 
-> 📄 **Use the real scripts:** the outline above is simplified. Copy the complete `failover.sh` / `follow_master.sh` / `reattach_nodes.sh` from `04_Configure_Pgpool.yml` for production.
+> 📄 **Optional hardening:** the repository's `04_Configure_Pgpool.yml` also ships a `reattach_nodes.sh` + `pgpool-reattach.timer` that periodically re-attach recovered backends and correct routing-role mismatches. It is optional — copy it from the playbook if you want it.
 
 #### systemd override (VIP capabilities + fast stop + self-heal)
 
-```bash
-mkdir -p /etc/systemd/system/pgpool.service.d   # RHEL; Debian: pgpool2.service.d
+> ⚠️ **The override differs by distro.** RHEL runs pgpool as `root` (the watchdog heartbeat needs euid=0 for `SO_BINDTODEVICE`); Debian runs it as `postgres`. Use the correct block below.
 
+```bash
+# RHEL/CentOS — service is `pgpool`, run as root:
+mkdir -p /etc/systemd/system/pgpool.service.d
 cat > /etc/systemd/system/pgpool.service.d/override.conf <<'EOF'
 [Unit]
 After=network-online.target
@@ -1463,7 +1538,6 @@ Wants=network-online.target
 [Service]
 Restart=always
 RestartSec=5
-# RHEL only: pgpool watchdog heartbeat requires euid=0 for SO_BINDTODEVICE
 User=root
 Group=root
 # Allow pgpool to manage the VIP via ip/arping
@@ -1473,11 +1547,29 @@ AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
 TimeoutStopSec=3
 SendSIGKILL=yes
 EOF
-
 systemctl daemon-reload
 ```
 
-> 📋 On Debian the service is `pgpool2` — use `/etc/systemd/system/pgpool2.service.d/override.conf` and **omit** the `User=root`/`Group=root` lines (Debian runs pgpool as `postgres`).
+```bash
+# Debian/Ubuntu — service is `pgpool2`, run as postgres (NO User=/Group= lines):
+mkdir -p /etc/systemd/system/pgpool2.service.d
+cat > /etc/systemd/system/pgpool2.service.d/override.conf <<'EOF'
+[Unit]
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Restart=always
+RestartSec=5
+# Allow pgpool to manage the VIP via ip/arping
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_OVERRIDE
+# Watchdog ignores SIGTERM during shutdown - force fast stop
+TimeoutStopSec=3
+SendSIGKILL=yes
+EOF
+systemctl daemon-reload
+```
 
 #### Start pgpool on all three nodes
 
@@ -1495,7 +1587,7 @@ ip addr show eth0 | grep 192.168.122.200    # RHEL (or your NIC)
 # ip addr show enp3s0 | grep 192.168.122.200  # Debian (predictable NIC name)
 ```
 
-> 🔁 **Auto-reattach:** the playbooks also deploy a `pgpool-reattach.timer` that periodically re-attaches recovered backend nodes and corrects routing-role mismatches. For a manual deployment, copy `reattach_nodes.sh` + the timer unit from `04_Configure_Pgpool.yml`.
+> 🔁 **Auto-reattach (optional):** the playbooks also deploy a `pgpool-reattach.timer` that periodically re-attaches recovered backend nodes and corrects routing-role mismatches. It is optional — copy `reattach_nodes.sh` + the timer unit from `04_Configure_Pgpool.yml` if you want it.
 
 ---
 
@@ -1513,6 +1605,10 @@ chown -R postgres:postgres /postgres
 # SSH key exchange: backup node ↔ each PG node (as postgres user)
 # 1. On backup node:  sudo -iu postgres ssh-keygen -t rsa -b 4096
 # 2. Copy key to each PG node:  sudo -iu postgres ssh-copy-id postgres@db1 (etc.)
+#    NOTE: ssh-copy-id prompts for the postgres user's password on the target.
+#    On a fresh install the postgres account may be locked — set a temporary
+#    password first (e.g.  sudo passwd postgres  on each PG node) or the copy
+#    will fail.
 # 3. Also allow postgres@dbX to SSH into the backup node (for archiving)
 
 # /etc/pgbackrest.conf on the BACKUP node
@@ -1579,6 +1675,8 @@ sudo -iu postgres pgbackrest --stanza=maruf info
 
 ```bash
 # On the primary, re-enable archiving and point it at pgBackRest
+# NOTE: the archive path below is the DEBIAN data dir. On RHEL use
+# /var/lib/pgsql/16/data/maruf/pg_wal/%f instead.
 patronictl -c /etc/patroni/patroni.yml edit-config \
   -s postgresql.parameters.archive_mode=on \
   -s 'postgresql.parameters.archive_command="pgbackrest --stanza=maruf archive-push /postgres/data/16/maruf/pg_wal/%f"' \
@@ -1665,18 +1763,25 @@ pmm-admin add postgresql --username=pmm --password=CHANGE_ME --skip-connection-c
 
 ### Phase 7 — Cluster health & self-healing (db1, db2, db3)
 
-The playbooks (06) deploy two systemd timers. For a manual deployment, copy the scripts from `06_Configure_Cluster_Health.yml`:
+> ⚠️ **These two scripts come from the repository** (`06_Configure_Cluster_Health.yml`). If you are following the manual path **without** the repo checked out, copy them from a machine that has it (or from the playbook file) before continuing — the timers below will fail without them. The cluster itself works fine without this phase; it only adds self-healing + monitoring.
 
 ```bash
 # 1. patroni_self_heal.sh — restart a crashed/stopped/failed LOCAL Patroni member
 #    (NEVER the leader). Copy from 06_Configure_Cluster_Health.yml.
-cp <(sed -n '/patroni_self_heal.sh/,/^    - name: Deploy Patroni self-heal systemd service/p' 06_Configure_Cluster_Health.yml) /usr/local/sbin/patroni_self_heal.sh
+#    From a repo checkout:
+cp 06_Configure_Cluster_Health.yml /tmp/06.yml
+#    Extract the script body from the playbook (between the copy task markers):
+sed -n '/patroni_self_heal.sh/,/^    - name: Deploy Patroni self-heal systemd service/p' /tmp/06.yml \
+  | sed '1d;$d' > /usr/local/sbin/patroni_self_heal.sh
 chmod 0755 /usr/local/sbin/patroni_self_heal.sh
 
 # 2. cluster_health.sh — checks etcd quorum, Patroni leader, pgpool watchdog
 #    quorum, backend status, VIP presence every 60s; writes Prometheus textfile
-#    metrics and fires health_alert_command on CRITICAL. Copy from 06.
-#    (Set health_alert_command in the script to get paged before an outage
+#    metrics and fires health_alert_command on CRITICAL. Copy from 06 the same way:
+sed -n '/cluster_health.sh/,/^    - name: Deploy cluster health monitor systemd service/p' /tmp/06.yml \
+  | sed '1d;$d' > /usr/local/sbin/cluster_health.sh
+chmod 0755 /usr/local/sbin/cluster_health.sh
+#    (Set health_alert_command inside the script to get paged before an outage
 #    becomes permanent.)
 
 # 3. systemd timers
@@ -1744,7 +1849,8 @@ ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 member list
 PCPPASSFILE=/etc/pgpool-II/.pcppass pcp_watchdog_info -v -h localhost -p 9898 -U pgpool_pcp -w
 ip addr show eth0 | grep 192.168.122.200
 
-# 4. You can connect through the VIP
+# 4. You can connect through the VIP (it will prompt for the postgres password
+#    you set in Phase 3)
 psql -h 192.168.122.200 -p 9999 -U postgres -d postgres -c "SELECT 1;"
 
 # 5. pgBackRest stanza + first backup exist
@@ -1800,7 +1906,8 @@ ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 member list
 pcp_watchdog_info -h localhost -p 9898 -U pgpool_pcp -w
 ip addr show eth0 | grep 192.168.122.200
 
-# 4. You can connect through the VIP
+# 4. You can connect through the VIP (it will prompt for the postgres password
+#    you set in variables.yaml)
 psql -h 192.168.122.200 -p 9999 -U postgres -d postgres -c "SELECT 1;"
 
 # 5. Verify the pgBackRest stanza + first backup (play 05 runs stanza-create + full backup automatically)
@@ -1864,13 +1971,16 @@ ETCDCTL_API=3 etcdctl --endpoints=http://192.168.122.150:2379 get /percona_lab/m
 
 ### pgpool-II (PCP)
 
+> 🔑 The `pcp_*` commands below use `-w` (no password prompt), which reads the passfile. Run them with `PCPPASSFILE` pointing at the passfile created in Phase 4 (RHEL: `/etc/pgpool-II/.pcppass`, Debian: `/etc/pgpool2/.pcppass`), or as the `postgres` user whose home has a `.pcppass`.
+
 ```bash
+export PCPPASSFILE=/etc/pgpool-II/.pcppass    # RHEL; Debian: /etc/pgpool2/.pcppass
 pcp_watchdog_info -h localhost -p 9898 -U pgpool_pcp -w    # watchdog cluster / VIP owner
 pcp_node_info    -h localhost -p 9898 -U pgpool_pcp -w     # backend node status
 pcp_pool_status  -h localhost -p 9898 -U pgpool_pcp -w     # pool status per database
 pcp_attach_node  -h localhost -p 9898 -U pgpool_pcp -w 1   # re-attach backend node 1 (node id is positional)
 pcp_detach_node  -h localhost -p 9898 -U pgpool_pcp -w 1   # detach for maintenance
-journalctl -u pgpool -f                                    # pgpool logs
+journalctl -u pgpool -f                                    # pgpool logs (RHEL; Debian: pgpool2)
 ```
 
 ### Backups (pgBackRest — on the backup node)
